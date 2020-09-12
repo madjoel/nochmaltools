@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 
 import sys
+import os
+
 import tkinter as tk
+from PIL import Image, ImageTk
 import tkinter.filedialog as tkfd
+
 import libnochmal as ln
 
 
@@ -52,8 +56,10 @@ class ColorButton(tk.Button):
         self.star = not self.star
         if self.star:
             self['text'] = self['text'].upper()
+            self['image'] = self.application.star_image
         else:
             self['text'] = self['text'].lower()
+            self['image'] = self.application.circle_image
 
     def change(self):
         if self.application.selected_tool.get() == 'star':
@@ -65,10 +71,12 @@ class ColorButton(tk.Button):
                 self['text'] = color.upper()
 
     def set_by_tile(self, tile):
-        self.config(text=tile.color, bg=color_to_rgb(tile.color), activebackground=secondary_color(tile.color))
+        self.config(text=tile.color, bg=color_to_rgb(tile.color), activebackground=secondary_color(tile.color),
+                    image=self.application.circle_image)
         if tile.star:
             self.star = True
             self['text'] = tile.color.upper()
+            self['image'] = self.application.star_image
 
     def mouse_entered(self):
         if not self.already_changed:
@@ -92,6 +100,11 @@ class Application(tk.Frame):
             self.filename.set(sys.argv[1])
         else:
             self.filename.set('/tmp/board.dat')
+
+        # load star and circle image
+        scriptpath = os.path.dirname(os.path.realpath(__file__))
+        self.star_image = ImageTk.PhotoImage(Image.open(scriptpath + '/img/star.png'))
+        self.circle_image = ImageTk.PhotoImage(Image.open(scriptpath + '/img/circle.png'))
 
         # tool tool bar
         self.selected_tool = tk.StringVar(master, value='pen')
@@ -123,6 +136,7 @@ class Application(tk.Frame):
             self.board_buttons.append([])
             for y in range(7):
                 btn = ColorButton(self)
+                btn['image'] = self.circle_image
                 btn.bind("<Button-1>", self.mouse_down)
                 btn.bind("<ButtonRelease-1>", self.mouse_up)
                 btn.bind("<B1-Motion>", self.mouse_motion)
