@@ -545,6 +545,51 @@ def _get_connected_coords(coordinates, anchor=None):
     return components
 
 
+# returns the set of all subgraphs with size amount of nodes given a graph and a start node
+def get_all_graphs_of_size(coords, start, size):
+    solutions = []  # this will have sets of frozensets as elements
+
+    for i in range(size):
+        if i == 0:
+            solutions.append({frozenset((start,))})
+            if size == 1:
+                return solutions
+            else:
+                continue
+        else:
+            solutions.append(set())
+
+        # here every subgraph found in the previous solution set is processed
+        for subgraph in solutions[i - 1]:  # subgraph is a set of nodes
+            # get all possible neighbours of this subgraph
+            neighbours = set()
+            for node in subgraph:
+                neighbours.update(get_neighbours(node, coords))
+
+            # remove the nodes from the subgraph from the set of all possible neighbours
+            neighbours = neighbours - subgraph
+
+            # add each combination of the subgraph and one of the found neighbours into the set of new solutions
+            for true_neighbour in neighbours:
+                new_subgraph = subgraph | {true_neighbour}
+                solutions[i].add(frozenset(new_subgraph))
+
+    return solutions[-1]
+
+
+# gets all neighbours of a coordinate.
+# if a set of possible coords is given, only neighbours included in that set are returned
+def get_neighbours(coord, coords=None):
+    neighbours = []
+    x, y = coord
+    for (ox, oy) in OFFSETS:
+        neighbour = (x + ox, y + oy)
+        if coords and neighbour not in coords:
+            continue
+        neighbours.append(neighbour)
+    return neighbours
+
+
 # calculates the amount of unique combinations of size r in a collection of n elements
 # itertools.combinations([1, 2, ... , n], r) yields all of those combinations
 def _calc_amount_of_combination(n, r):
