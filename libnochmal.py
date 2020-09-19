@@ -1,10 +1,8 @@
-from math import factorial
 import random
+from enum import Enum
+from math import factorial
 
 
-COLORS_REFERENCE_SET = {'r', 'o', 'y', 'g', 'b'}
-COLORS_REFERENCE_LIST = ['r', 'o', 'y', 'g', 'b']
-COLOR_UNINITIALIZED = 'w'
 OFFSETS = [
     (0, -1),
     (1, 0),
@@ -15,8 +13,55 @@ SOLUTION_COUNTER = 0
 RNG = random.Random()
 
 
+class Color(Enum):
+    RED = 'r'
+    ORANGE = 'o'
+    YELLOW = 'y'
+    GREEN = 'g'
+    BLUE = 'b'
+    WHITE = 'w'
+    UNINITIALIZED = 'w'
+
+    def to_rgb(self):
+        if self == Color.RED: return "#FA0046"
+        if self == Color.ORANGE: return "#FA8200"
+        if self == Color.YELLOW: return "#FADC00"
+        if self == Color.GREEN: return "#96BE1E"
+        if self == Color.BLUE: return "#5AC8FA"
+        if self == Color.WHITE: return "#FFFFFF"
+        else:
+            return "FF00FF"
+
+    def to_rgb_secondary(self):
+        if self == Color.RED: return '#FB5986'
+        if self == Color.ORANGE: return '#FBAD59'
+        if self == Color.YELLOW: return '#FBE859'
+        if self == Color.GREEN: return '#BAD46C'
+        if self == Color.BLUE: return '#93DBFB'
+        if self == Color.WHITE: return '#ECECEC'
+        else:
+            return "FF77FF"
+
+    @classmethod
+    def ref_set(cls, with_white=False):
+        if with_white:
+            return {Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.BLUE, Color.WHITE}
+        else:
+            return {Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.BLUE}
+
+    @classmethod
+    def ref_list(cls, with_white=False):
+        if with_white:
+            return [Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.BLUE, Color.WHITE]
+        else:
+            return [Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.BLUE]
+
+    def __lt__(self, other):
+        return self.value < other.value
+
+
 class Tile:
-    def __init__(self, color, star=False):
+    def __init__(self, color=Color.UNINITIALIZED, star=False):
         self._color = color
         self._star = star
 
@@ -28,6 +73,10 @@ class Tile:
     def star(self):
         return self._star
 
+    @color.setter
+    def color(self, value):
+        self._color = value
+
     @star.setter
     def star(self, value):
         self._star = value
@@ -37,7 +86,7 @@ class Board:
     def __init__(self, width=15, height=7):
         self._width = width
         self._height = height
-        self._tiles = [Tile(COLOR_UNINITIALIZED) for _ in range(width * height)]
+        self._tiles = [Tile() for _ in range(width * height)]
 
     @property
     def tiles(self):
@@ -60,6 +109,14 @@ class Board:
     def set_tile_at(self, x, y, tile):
         if self.in_bounds(x, y):
             self._tiles[self._to_index(x, y)] = tile
+
+    def get_color_at(self, x, y):
+        if self.in_bounds(x, y):
+            return self._tiles[self._to_index(x, y)].color
+
+    def set_color_at(self, x, y, color):
+        if self.in_bounds(x, y):
+            self._tiles[self._to_index(x, y)].color = color
 
     def get_star_at(self, x, y):
         if self.in_bounds(x, y):
@@ -102,9 +159,9 @@ class Board:
             for x in range(self._width):
                 tile = self.get_tile_at(x, y)
                 if tile.star:
-                    s += tile.color.upper()
+                    s += tile.color.value.upper()
                 else:
-                    s += tile.color
+                    s += tile.color.value
 
             if y != self._height - 1:
                 s += '\n'
@@ -131,9 +188,9 @@ def read_board_from_file(filename):
                 if line[j].isupper():
                     tile._star = True
 
-                tile._color = line[j].lower()
-
-                if line[j].lower() not in COLORS_REFERENCE_SET | {COLOR_UNINITIALIZED}:
+                try:
+                    tile._color = Color(line[j].lower())
+                except ValueError:
                     print("Unrecognized color '{}' at ({}, {})".format(line[j].lower(), j, i - 2))
                     return None
 
@@ -179,13 +236,7 @@ def check_columns(board, lazy=False):
     error_msgs = []
 
     for col in range(board.width):
-        colors_seen = {
-            'r': False,
-            'o': False,
-            'y': False,
-            'g': False,
-            'b': False
-        }
+        colors_seen = dict(zip(Color.ref_list(), [False for _ in range(len(Color.ref_list()))]))
         stars = 0
 
         for y in range(board.height):
@@ -211,14 +262,7 @@ def check_columns(board, lazy=False):
 def check_components(board, lazy=False):
     error_msgs = []
 
-    components = {
-        'r': set(),
-        'o': set(),
-        'y': set(),
-        'g': set(),
-        'b': set()
-    }
-
+    components = dict(zip(Color.ref_list(), [set() for _ in range(len(Color.ref_list()))]))
     visited_coords = set()
 
     for y in range(board.height):
@@ -263,13 +307,7 @@ def check_components(board, lazy=False):
 def check_stars_per_color(board, lazy=False):
     error_msgs = []
 
-    star_counts = {
-        'r': 0,
-        'o': 0,
-        'y': 0,
-        'g': 0,
-        'b': 0
-    }
+    star_counts = dict(zip(Color.ref_list(), [0 for _ in range(len(Color.ref_list()))]))
 
     for tile in board.tiles:
         if tile.star:
@@ -315,14 +353,14 @@ def set_seed(seed):
 def fill_randomly(board):
     for y in range(board.height):
         for x in range(board.width):
-            board.set_tile_at(x, y, Tile(RNG.choice(COLORS_REFERENCE_LIST)))
+            board.set_tile_at(x, y, Tile(RNG.choice(Color.ref_list())))
 
 
 # fill a board a little smarter, but still randomly
 # seeds 8, 151, 213 were tested to work, for all seeds to work, this should be done by backtracking
 def fill_randomly_smarter(board):
-    color_counts = dict(zip(COLORS_REFERENCE_LIST, [0, 0, 0, 0, 0]))
-    available_colors = set(COLORS_REFERENCE_LIST)
+    color_counts = dict(zip(Color.ref_list(), [0 for _ in range(len(Color.ref_list()))]))
+    available_colors = Color.ref_set()
 
     for x in range(board.width):
         for y in range(board.height):
@@ -348,14 +386,7 @@ def distribute_stars(board, assume_no_stars=False):
                     tile.star = False
                     board.set_tile_at(x, y, tile)
 
-    stars_per_color = {
-        'r': set(),
-        'o': set(),
-        'y': set(),
-        'g': set(),
-        'b': set()
-    }
-
+    stars_per_color = dict(zip(Color.ref_list(), [set() for _ in range(len(Color.ref_list()))]))
     _place_stars_backtrack(board, stars_per_color, 0)
 
 
@@ -433,7 +464,7 @@ def _tile_color_is_placeable_at(board, color, x, y, check_neighbours=False, do_n
     tile = board.get_tile_at(x, y)
 
     # fail if already initialized
-    if tile.color != COLOR_UNINITIALIZED:
+    if tile.color != Color.UNINITIALIZED:
         return False
 
     # fail if a neighbour already has this color
@@ -458,12 +489,12 @@ def _get_capacity_for_color_in_column(board, color, col):
     free_in_col = 0
     for row in range(board.height):
         current_color = board.get_tile_at(col, row).color
-        if current_color == 'w':
+        if current_color == Color.UNINITIALIZED:
             free_in_col += 1
         else:
             colors_seen.add(current_color)
 
-    amount_of_missing_colors = len(COLORS_REFERENCE_SET) - len(colors_seen)
+    amount_of_missing_colors = len(Color.ref_set()) - len(colors_seen)
     capacity = free_in_col - amount_of_missing_colors
     if color not in colors_seen:
         capacity += 1
@@ -473,7 +504,7 @@ def _get_capacity_for_color_in_column(board, color, col):
 
 def _get_possible_colors_for_column(board, col):
     possible_colors = set()
-    for c in COLORS_REFERENCE_SET:
+    for c in Color.ref_set():
         if _get_capacity_for_color_in_column(board, c, col) > 0:
             possible_colors.add(c)
     return possible_colors
@@ -517,4 +548,4 @@ def _get_connected_coords(coordinates, anchor=None):
 # calculates the amount of unique combinations of size r in a collection of n elements
 # itertools.combinations([1, 2, ... , n], r) yields all of those combinations
 def _calc_amount_of_combination(n, r):
-    return factorial(n) / factorial(r) / factorial(n-r)
+    return factorial(n) / factorial(r) / factorial(n - r)

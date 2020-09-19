@@ -2,89 +2,101 @@
 
 import sys
 import os
+from enum import Enum, auto
 
 import tkinter as tk
 from PIL import Image, ImageTk
 import tkinter.filedialog as tkfd
 
 import libnochmal as ln
+from libnochmal import Color
 
 
-RED = "#FA0046"
-ORANGE = "#FA8200"
-YELLOW = "#FADC00"
-GREEN = "#96BE1E"
-BLUE = "#5AC8FA"
-
-
-def color_to_rgb(color):
-    if color == 'r': return RED
-    if color == 'o': return ORANGE
-    if color == 'y': return YELLOW
-    if color == 'g': return GREEN
-    if color == 'b': return BLUE
-    return "white"
-
-
-def rgb_to_color(rgb):
-    if rgb == RED:    return 'r'
-    if rgb == ORANGE: return 'o'
-    if rgb == YELLOW: return 'y'
-    if rgb == GREEN:  return 'g'
-    if rgb == BLUE:   return 'b'
-    return "w"
-
-
-def secondary_color(color):
-    if color == RED or color == 'r': return '#FB5986'
-    if color == ORANGE or color == 'o': return '#FBAD59'
-    if color == YELLOW or color == 'y': return '#FBE859'
-    if color == GREEN or color == 'g': return '#BAD46C'
-    if color == BLUE or color == 'b': return '#93DBFB'
-    return '#ececec'
+class Tool(Enum):
+    PEN = auto()
+    FILL = auto()
+    STAR = auto()
 
 
 class ColorButton(tk.Button):
-    def __init__(self, master, text='w', bg="white", activebackground=secondary_color('w')):
-        super(ColorButton, self).__init__(master, text=text, bg=bg, activebackground=activebackground,
+    def __init__(self, master, color, x, y):
+        super(ColorButton, self).__init__(master, bg=color.to_rgb(), activebackground=color.to_rgb_secondary(),
                                           font='TkFixedFont', relief="flat", overrelief="flat")
         self.application = master
         self.already_changed = False
+        self.color = color
         self.star = False
+        self['image'] = self.application.circle_image
+        self.x = x
+        self.y = y
 
-    def toggle_star(self):
-        self.star = not self.star
+    def toggle_star(self, value=None):
+        if value is not None:
+            self.star = value
+        else:
+            self.star = not self.star
         if self.star:
-            self['text'] = self['text'].upper()
             self['image'] = self.application.star_image
         else:
-            self['text'] = self['text'].lower()
             self['image'] = self.application.circle_image
+        self.application.board.set_star_at(self.x, self.y, self.star)
 
-    def change(self):
-        if self.application.selected_tool.get() == 'star':
+    def change_color(self, color):
+        self.color = color
+        self.config(bg=color.to_rgb(), activebackground=color.to_rgb_secondary())
+        self.application.board.set_color_at(self.x, self.y, self.application.selected_color.get())
+
+    def change_by_tool(self):
+        selected_tool = self.application.selected_tool.get()
+        if selected_tool == Tool.STAR:
             self.toggle_star()
-        else:
-            color = self.application.selected_color.get()
-            self.config(text=color, bg=color_to_rgb(color), activebackground=secondary_color(color))
-            if self.star:
-                self['text'] = color.upper()
+        elif selected_tool == Tool.PEN:
+            self.change_color(self.application.selected_color.get())
+        else:  # fill
+            pass
+            # comp = self.application.board.get_component(self.x, self.y)
+            # print(comp)
 
     def set_by_tile(self, tile):
-        self.config(text=tile.color, bg=color_to_rgb(tile.color), activebackground=secondary_color(tile.color),
-                    image=self.application.circle_image)
-        if tile.star:
-            self.star = True
-            self['text'] = tile.color.upper()
-            self['image'] = self.application.star_image
+        self.change_color(tile.color)
+        self.toggle_star(tile.star)
 
     def mouse_entered(self):
         if not self.already_changed:
             self.already_changed = True
-            self.change()
+            self.change_by_tool()
 
     def mouse_up(self):
         self.already_changed = False
+
+
+class ColorRadiobutton(tk.Radiobutton):
+    def __init__(self, master, color, variable):
+        super(ColorRadiobutton, self).__init__(master, variable=variable, value=color, bg=color.to_rgb(),
+                                               activebackground=color.to_rgb_secondary())
+
+
+class EnumVar(tk.Variable):
+    """Value holder for strings variables."""
+    _default = ""
+
+    def __init__(self, enum, default=None, master=None, value=None, name=None):
+        """Construct a color variable."""
+        tk.Variable.__init__(self, master, value, name)
+        self.enum = enum
+        self._default = default
+
+    def get(self):
+        """Return value of variable as color."""
+        value = self._tk.globalgetvar(self._name)
+        if isinstance(value, self.enum):
+            return value
+
+        for c in self.enum:
+            if str(c) == value:
+                return c
+
+        return self._default
 
 
 class Application(tk.Frame):
@@ -102,27 +114,28 @@ class Application(tk.Frame):
             self.filename.set('/tmp/board.dat')
 
         # load star and circle image
-        scriptpath = os.path.dirname(os.path.realpath(__file__))
-        self.star_image = ImageTk.PhotoImage(Image.open(scriptpath + '/img/star.png'))
-        self.circle_image = ImageTk.PhotoImage(Image.open(scriptpath + '/img/circle.png'))
+        script_path = os.path.dirname(os.path.realpath(__file__))
+        self.star_image = ImageTk.PhotoImage(Image.open(script_path + '/img/star.png'))
+        self.circle_image = ImageTk.PhotoImage(Image.open(script_path + '/img/circle.png'))
 
         # tool tool bar
-        self.selected_tool = tk.StringVar(master, value='pen')
-        self.radio_pen = tk.Radiobutton(self, text='Pen', variable=self.selected_tool, value='pen')
-        self.radio_fill = tk.Radiobutton(self, text='Fill', variable=self.selected_tool, value='fill')
-        self.radio_star = tk.Radiobutton(self, text='Star', variable=self.selected_tool, value='star')
+        self.selected_tool = EnumVar(Tool, default=Tool.PEN, master=master, value=Tool.PEN)
+        self.radio_pen = tk.Radiobutton(self, text='Pen', variable=self.selected_tool, value=Tool.PEN)
+        self.radio_fill = tk.Radiobutton(self, text='Fill', variable=self.selected_tool, value=Tool.FILL)
+        self.radio_star = tk.Radiobutton(self, text='Star', variable=self.selected_tool, value=Tool.STAR)
         self.radio_pen.grid(row=0, column=0, columnspan=2, sticky='W')
         self.radio_fill.grid(row=0, column=2, columnspan=2, sticky='W')
         self.radio_star.grid(row=0, column=4, columnspan=2, sticky='W')
 
         # color tool bar
-        self.selected_color = tk.StringVar(master, value='r')
-        self.radio_r = tk.Radiobutton(self, variable=self.selected_color, value='r', bg=RED, activebackground=secondary_color(RED))
-        self.radio_o = tk.Radiobutton(self, variable=self.selected_color, value='o', bg=ORANGE, activebackground=secondary_color(ORANGE))
-        self.radio_y = tk.Radiobutton(self, variable=self.selected_color, value='y', bg=YELLOW, activebackground=secondary_color(YELLOW))
-        self.radio_g = tk.Radiobutton(self, variable=self.selected_color, value='g', bg=GREEN, activebackground=secondary_color(GREEN))
-        self.radio_b = tk.Radiobutton(self, variable=self.selected_color, value='b', bg=BLUE, activebackground=secondary_color(BLUE))
-        self.radio_w = tk.Radiobutton(self, variable=self.selected_color, value='w', bg="white")
+        self.selected_color = EnumVar(Color, default=Color.UNINITIALIZED, master=master, value=Color.RED)
+        self.radio_r = ColorRadiobutton(self, Color.RED, self.selected_color)
+        self.radio_o = ColorRadiobutton(self, Color.ORANGE, self.selected_color)
+        self.radio_y = ColorRadiobutton(self, Color.YELLOW, self.selected_color)
+        self.radio_g = ColorRadiobutton(self, Color.GREEN, self.selected_color)
+        self.radio_b = ColorRadiobutton(self, Color.BLUE, self.selected_color)
+        self.radio_w = ColorRadiobutton(self, Color.WHITE, self.selected_color)
+
         self.radio_r.grid(row=0, column=9)
         self.radio_o.grid(row=0, column=10)
         self.radio_y.grid(row=0, column=11)
@@ -135,8 +148,7 @@ class Application(tk.Frame):
         for x in range(15):
             self.board_buttons.append([])
             for y in range(7):
-                btn = ColorButton(self)
-                btn['image'] = self.circle_image
+                btn = ColorButton(self, Color.UNINITIALIZED, x, y)
                 btn.bind("<Button-1>", self.mouse_down)
                 btn.bind("<ButtonRelease-1>", self.mouse_up)
                 btn.bind("<B1-Motion>", self.mouse_motion)
@@ -144,7 +156,7 @@ class Application(tk.Frame):
                 btn.bind("<ButtonRelease-3>", self.mouse_sec_up)
                 btn.bind("<B3-Motion>", self.mouse_motion)
 
-                btn.grid(row=(1+y), column=x)
+                btn.grid(row=(1 + y), column=x)
                 self.board_buttons[x].append(btn)
 
         # bottom buttons
@@ -180,7 +192,7 @@ class Application(tk.Frame):
                 button.mouse_up()
 
     def mouse_motion(self, e):
-        if self.selected_tool.get() == 'pen':
+        if self.selected_tool.get() == Tool.PEN:
             self.update_containing_button(e)
 
     def update_containing_button(self, e):
@@ -191,7 +203,7 @@ class Application(tk.Frame):
 
     def mouse_sec_down(self, e):
         self.old_color = self.selected_color.get()
-        self.selected_color.set('w')
+        self.selected_color.set(Color.WHITE)
         self.mouse_down(e)
 
     def mouse_sec_up(self, e):
@@ -227,7 +239,7 @@ class Application(tk.Frame):
     def save_board(self):
         for x in range(self.board.width):
             for y in range(self.board.height):
-                color = self.board_buttons[x][y]['text'].lower()
+                color = self.board_buttons[x][y].color
                 star = self.board_buttons[x][y].star
                 self.board.set_tile_at(x, y, ln.Tile(color, star))
 
