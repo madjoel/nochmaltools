@@ -483,6 +483,8 @@ def _tile_color_is_placeable_at(board, color, x, y, check_neighbours=False, do_n
     if _get_capacity_for_color_in_column(board, color, x) < 1:
         return False
 
+    return True
+
 
 def _get_capacity_for_color_in_column(board, color, col):
     colors_seen = set()
