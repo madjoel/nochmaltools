@@ -19,8 +19,8 @@ class Color(Enum):
     YELLOW = 'y'
     GREEN = 'g'
     BLUE = 'b'
-    WHITE = 'w'
-    UNINITIALIZED = 'w'
+    WHITE = '_'
+    UNINITIALIZED = '_'
 
     def to_rgb(self):
         if self == Color.RED: return "#FA0046"
