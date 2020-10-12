@@ -555,7 +555,7 @@ def get_all_graphs_of_size(coords, start, size):
         if i == 0:
             solutions.append({frozenset((start,))})
             if size == 1:
-                return solutions
+                return solutions[0]
             else:
                 continue
         else:
