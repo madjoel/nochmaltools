@@ -173,6 +173,21 @@ class Board:
         return s
 
 
+class BacktrackingState:
+    def __init__(self):
+        self.level = 0
+        self.tries = 0
+
+    def inc_level(self):
+        self.level += 1
+
+    def dec_level(self):
+        self.level -= 1
+
+    def inc_tries(self):
+        self.tries += 1
+
+
 def read_board_from_file(filename):
     with open(filename, 'r') as file:
         lines = file.readlines()
@@ -376,6 +391,83 @@ def fill_randomly_smarter(board):
                 available_colors.remove(c)
 
 
+def fill_smart(board, state):
+    # board = Board()
+    components = [(c, n) for n in range(6, 0, -1) for c in Color.ref_list()]
+    # RNG.shuffle(components)  # TODO: check if makes sense
+    _fill_smart_backtrack(board, components, 0, state)
+
+
+def _fill_smart_backtrack(board, components, comp_index, state):
+    if comp_index == 5 * 6:
+        return True  # done
+
+    component_color = components[comp_index][0]
+    component_size = components[comp_index][1]
+
+    free_space = _get_free_tiles(board)
+    for (fx, fy) in free_space:
+        free_space_component = _get_connected_coords(free_space, (fx, fy))[0]
+        combinations = get_all_graphs_of_size(free_space_component, (fx, fy), component_size)
+        for combi in combinations:
+            if _combination_is_placeable(board, combi, component_color, free_space):
+                # place combination
+                for (x, y) in combi:
+                    board.set_tile_at(x, y, Tile(component_color))
+                state.inc_tries()
+
+                # continue with next component
+                state.inc_level()
+                if _fill_smart_backtrack(board, components, comp_index + 1, state):
+                    # print('Placing component index {} ...'.format(comp_index + 1))
+                    return True
+                else:
+                    for (x, y) in combi:
+                        board.set_tile_at(x, y, Tile())
+
+    state.dec_level()
+    return False
+
+
+def _combination_is_placeable(board, combination, color, free_space):
+    dont_check = []
+    result = True
+
+    for (x, y) in combination:
+        if _tile_color_is_placeable_at(board, color, x, y, True, dont_check):
+            board.set_tile_at(x, y, Tile(color))
+            dont_check.append((x, y))
+        else:
+            result = False
+            break
+
+    if result:
+        # check if combination separates free space into multiple components
+        for coord in combination:
+            if coord in free_space:
+                free_space.remove(coord)
+
+        if len(_get_connected_coords(free_space)) > 1:
+            result = False
+
+    # remove combination
+    for (x, y) in combination:
+        board.set_tile_at(x, y, Tile())
+
+    return result
+
+
+def _get_free_tiles(board):
+    free_tiles = []
+
+    for x in range(15):
+        for y in range(7):
+            if board.get_tile_at(x, y).color == Color.UNINITIALIZED:
+                free_tiles.append((x, y))
+
+    return free_tiles
+
+
 # distribute stars in the board
 def distribute_stars(board, assume_no_stars=False):
     if not assume_no_stars:
@@ -423,36 +515,6 @@ def _place_stars_backtrack(board, stars_per_color, col):
             else:
                 board.set_star_at(col, row, False)
                 stars_per_color[board.get_tile_at(col, row).color].remove((col, row))
-
-    return False
-
-
-# not fully implemented yet
-def _component_is_placeable_at(board, color, size, x, y):
-    # fail if the first tile of this color can't even be placed
-    if not _tile_color_is_placeable_at(board, color, x, y, check_neighbours=True):
-        return False
-
-    # fail if there is not enough space for the component to fit
-    free_space = board.get_component(x, y)
-    if len(free_space) < size:
-        return False
-
-    obstructed_space = set()
-    for (x, y) in free_space:
-        for (ox, oy) in OFFSETS:
-            tile = board.get_tile_at(x + ox, y + oy)
-            if tile and tile.color == color:
-                obstructed_space.add((x, y))
-
-        # check if the column has capacity for more of this color
-        if _get_capacity_for_color_in_column(board, color, x) < 1:
-            obstructed_space.add((x, y))
-
-    actual_space = free_space - obstructed_space
-    possible_component = _get_connected_coords(actual_space, (x, y))[0]
-    if len(possible_component) >= size:
-        return True  # todo: actually it must still be tested, if a combination exists, that does not block any column
 
     return False
 
