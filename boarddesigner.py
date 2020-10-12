@@ -5,6 +5,8 @@ import os
 from enum import Enum, auto
 
 import tkinter as tk
+from threading import Thread, Event
+
 from PIL import Image, ImageTk
 import tkinter.filedialog as tkfd
 
@@ -103,7 +105,7 @@ class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
         self.master = master
-        self.old_color = 'w'
+        self.old_color = Color.UNINITIALIZED
         self.grid()
         self.filename = tk.StringVar(self)
 
@@ -162,9 +164,23 @@ class Application(tk.Frame):
                 btn.grid(row=(1 + y), column=x)
                 self.board_buttons[x].append(btn)
 
+        # generate tool bar
+        self.generate_bar = tk.Frame(self)
+        self.generate_bar.grid(row=8, column=0, columnspan=15, sticky='W')
+        self.btn_gen = tk.Button(self.generate_bar, text='Generate Board', command=self.generate_a_board)
+        self.btn_cancel = tk.Button(self.generate_bar, text='Cancel Generation', command=self.cancel_generation)
+        self.btn_gen.pack(side='left')
+        self.btn_cancel.pack(side='left')
+
+        self.timer = None
+        self.gen_thread = None
+        self.stopFlag = None
+        self.gen_board = None
+        self.gen_state = None
+
         # bottom buttons
         self.bottom_bar = tk.Frame(self)
-        self.bottom_bar.grid(row=8, column=0, columnspan=15, sticky='W')
+        self.bottom_bar.grid(row=9, column=0, columnspan=15, sticky='W')
 
         self.btn_load = tk.Button(self.bottom_bar, text='Load', command=self.load_board)
         self.btn_load.pack(side='left')
@@ -176,7 +192,7 @@ class Application(tk.Frame):
         self.lbl_file.pack(side='left')
 
         self.btn_save = tk.Button(self, text='Save', command=self.save_board)
-        self.btn_save.grid(row=8, column=13, columnspan=2, sticky='E')
+        self.btn_save.grid(row=9, column=13, columnspan=2, sticky='E')
 
         # try to import the board from the filename
         try:
@@ -247,6 +263,21 @@ class Application(tk.Frame):
                 self.board.set_tile_at(x, y, ln.Tile(color, star))
 
         ln.write_board_to_file(self.board, self.filename.get())
+
+    def generate_a_board(self):
+        self.gen_board = ln.Board()
+        self.gen_state = ln.BacktrackingState()
+        self.stopFlag = Event()
+        self.timer = ln.PerpetualTimer(self.stopFlag, lambda: self.import_board(self.gen_board), 1.0)
+        self.timer.start()
+
+        self.gen_thread = Thread(target=ln.fill_smart, args=(self.gen_board, self.gen_state))
+        self.gen_thread.start()
+
+    def cancel_generation(self):
+        # this will stop the timer
+        # todo: stop the gen thread gracefully
+        self.stopFlag.set()
 
 
 root = tk.Tk()
