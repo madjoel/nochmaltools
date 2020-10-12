@@ -1,7 +1,7 @@
 import random
 from enum import Enum
 from math import factorial
-
+from threading import Thread
 
 OFFSETS = [
     (0, -1),
@@ -171,6 +171,19 @@ class Board:
         s = "{}x{} Board:\n".format(self._width, self._height)
         s += str(self)
         return s
+
+
+class PerpetualTimer(Thread):
+    def __init__(self, event, fn, interval):
+        Thread.__init__(self)
+        self.stopped = event
+        self.fn = fn
+        self.interval = interval
+        self.daemon = True
+
+    def run(self):
+        while not self.stopped.wait(self.interval):
+            self.fn()
 
 
 class BacktrackingState:
