@@ -119,13 +119,16 @@ class Application(tk.Frame):
         self.circle_image = ImageTk.PhotoImage(Image.open(script_path + '/img/circle.png'))
 
         # tool tool bar
+        self.top_tool_tool_bar = tk.Frame(self)
+        self.top_tool_tool_bar.grid(row=0, column=0, columnspan=6, sticky='W')
+
         self.selected_tool = EnumVar(Tool, default=Tool.PEN, master=master, value=Tool.PEN)
-        self.radio_pen = tk.Radiobutton(self, text='Pen', variable=self.selected_tool, value=Tool.PEN)
-        self.radio_fill = tk.Radiobutton(self, text='Fill', variable=self.selected_tool, value=Tool.FILL)
-        self.radio_star = tk.Radiobutton(self, text='Star', variable=self.selected_tool, value=Tool.STAR)
-        self.radio_pen.grid(row=0, column=0, columnspan=2, sticky='W')
-        self.radio_fill.grid(row=0, column=2, columnspan=2, sticky='W')
-        self.radio_star.grid(row=0, column=4, columnspan=2, sticky='W')
+        self.radio_pen = tk.Radiobutton(self.top_tool_tool_bar, text='Pen', variable=self.selected_tool, value=Tool.PEN)
+        self.radio_fill = tk.Radiobutton(self.top_tool_tool_bar, text='Fill', variable=self.selected_tool, value=Tool.FILL)
+        self.radio_star = tk.Radiobutton(self.top_tool_tool_bar, text='Star', variable=self.selected_tool, value=Tool.STAR)
+        self.radio_pen.pack(side='left')
+        self.radio_fill.pack(side='left')
+        self.radio_star.pack(side='left')
 
         # color tool bar
         self.selected_color = EnumVar(Color, default=Color.UNINITIALIZED, master=master, value=Color.RED)
