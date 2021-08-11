@@ -12,6 +12,11 @@ OFFSETS = [
 SOLUTION_COUNTER = 0
 RNG = random.Random()
 
+DEFAULT_BOARD_WIDTH = 15
+DEFAULT_BOARD_HEIGHT = 7
+
+POINTS_PER_COLUMN = [5, 3, 3, 3, 2, 2, 2, 1, 2, 2, 2, 3, 3, 3, 5]
+
 
 class Color(Enum):
     RED = 'r'
@@ -83,7 +88,7 @@ class Tile:
 
 
 class Board:
-    def __init__(self, width=15, height=7):
+    def __init__(self, width=DEFAULT_BOARD_WIDTH, height=DEFAULT_BOARD_HEIGHT):
         self._width = width
         self._height = height
         self._tiles = [Tile() for _ in range(width * height)]
