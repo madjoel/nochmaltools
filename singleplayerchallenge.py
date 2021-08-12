@@ -263,8 +263,14 @@ class Application(tk.Frame):
         self.update_statusbar()
 
         if self.game_state.toss_counter == 30:
-            msgbox.showinfo("Game Over", "Game over, final score: " + str(self.calc_score()))
-            # todo: display score details
+            score = self.calc_score()
+            msgbox.showinfo("Game Over", "Game over, final score:\n\n"
+                                         "Color bonus:\t{1[0]:>3}\n"
+                                         "Column bonus:\t{1[1]:>3}\n"
+                                         "Joker bonus:\t{1[2]:>3}\n"
+                                         "Star penalty:\t{1[3]:>3}\n"
+                                         "-----------------------------\n"
+                                         "Total score:\t{0}".format(sum(score), score))
             self.game_state.finish()
             return
         else:
@@ -332,17 +338,17 @@ class Application(tk.Frame):
         turn = "Turn {:>2}/30".format(state.toss_counter)
         jokers = "Jokers left: " + str(state.joker_count)
         placed_crosses = "Crosses placed: " + str(len(state.crossed_tiles_to_commit))
-        score = "Score: " + str(self.calc_score())
+        score = "Score: " + str(sum(self.calc_score()))
 
         self.statusbar['text'] = "{} {} {} {}".format(turn, jokers, placed_crosses, score)
 
     def calc_score(self):
         state = self.game_state
-        score = state.joker_count
-        score += sum([5 if v == 21 else 0 for v in state.colors_crossed.values()])
-        score += sum([ln.POINTS_PER_COLUMN[i] if v == 7 else 0 for i, v in zip(range(state.board.width), state.columns_crossed)])
-        score += (-2) * (state.board.width - state.stars_crossed)
-        return score
+        return [sum([5 if v == 21 else 0 for v in state.colors_crossed.values()]),  # color bonus
+                sum([ln.POINTS_PER_COLUMN[i] if v == 7 else 0 for i, v in
+                     zip(range(state.board.width), state.columns_crossed)]),  # column bonus
+                state.joker_count,  # joker bonus
+                (-2) * (state.board.width - state.stars_crossed)]  # star penalty
 
     def update_column_finished_indicators(self):
         pass  # todo
