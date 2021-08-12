@@ -46,8 +46,12 @@ class ColorButton(tk.Button):
             else:
                 self['image'] = Application.CIRCLE_IMAGE
         else:
-            self['image'] = Application.CROSS_IMAGE
+            self['image'] = Application.CROSS_GRAY_IMAGE
+
         self.crossed = not self.crossed
+
+    def commit(self):
+        self['image'] = Application.CROSS_IMAGE
 
 
 class SinglePlayerGameState:
@@ -61,6 +65,16 @@ class SinglePlayerGameState:
         self.rolled_colors = [Color.UNINITIALIZED, Color.UNINITIALIZED]
         self.crossed_tiles = []
         self.crossed_tiles_to_commit = []
+        self.stars_crossed = 0
+        self.columns_crossed = []
+        self.colors_crossed = dict(zip(Color.ref_list(), [0 for _ in range(len(Color.ref_list()))]))
+
+    def start(self):
+        self.started = True
+        self.columns_crossed = [0 for _ in range(self.board.width)]
+
+    def finish(self):
+        self.started = False
 
     def inc_toss_count(self):
         if not self.started or self.tossed:
@@ -81,6 +95,7 @@ class Application(tk.Frame):
     STAR_IMAGE = None
     CIRCLE_IMAGE = None
     CROSS_IMAGE = None
+    CROSS_GRAY_IMAGE = None
     O_IMAGE = None
 
     def __init__(self, master=None):
@@ -95,6 +110,7 @@ class Application(tk.Frame):
         Application.STAR_IMAGE = ImageTk.PhotoImage(Image.open(script_path + '/img/star.png'))
         Application.CIRCLE_IMAGE = ImageTk.PhotoImage(Image.open(script_path + '/img/circle.png'))
         Application.CROSS_IMAGE = ImageTk.PhotoImage(Image.open(script_path + '/img/cross.png'))
+        Application.CROSS_GRAY_IMAGE = ImageTk.PhotoImage(Image.open(script_path + '/img/cross-gray.png'))
         Application.O_IMAGE = ImageTk.PhotoImage(Image.open(script_path + '/img/o.png'))
 
         # top buttons
@@ -150,7 +166,16 @@ class Application(tk.Frame):
         self.commit_btn.grid(row=10, column=8, columnspan=3, sticky='W')
         self.commit_btn.bind("<Button-1>", self.commit)
 
+        # status bar
+        self.sep = tk.Label(self, text='_______________________________________________________________')
+        self.sep.grid(row=11, column=0, columnspan=15)
+        self.statusbar = tk.Label(self, text='status bar text here')
+        self.statusbar.grid(row=12, column=0, columnspan=15, sticky='W')
+
     def open_board(self, _event):
+        if self.game_state.started:
+            pass  # todo: ask if should clear
+
         f = tkfd.askopenfilename(defaultextension='.dat')
         if len(f) == 0:
             return
@@ -174,12 +199,18 @@ class Application(tk.Frame):
         if self.game_state.board is None or self.game_state.started:
             return
 
-        self.game_state.started = True
+        self.game_state.start()
         self.toss()
+        self.update_statusbar()
+
+    def clear_game(self):
+        pass  # todo
 
     def toss(self):
         if not self.game_state.started or self.game_state.tossed:
             return
+
+        # todo: animation
 
         self.game_state.rolled_numbers[0] = random.randint(1, 6)
         self.game_state.rolled_numbers[1] = random.randint(1, 6)
@@ -215,13 +246,30 @@ class Application(tk.Frame):
             if not self.game_state.use_joker(jokers_used):
                 return
 
-        # all checks passed
+        # all checks passed, update game state
+        for (x, y) in self.game_state.crossed_tiles_to_commit:
+            self.board_buttons[x][y].commit()
+            tile = self.game_state.board.get_tile_at(x, y)
+            self.game_state.colors_crossed[tile.color] += 1
+            self.game_state.columns_crossed[x] += 1
+            if tile.star:
+                self.game_state.stars_crossed += 1
+
+        # reset tiles to commit list
         self.game_state.crossed_tiles.extend(self.game_state.crossed_tiles_to_commit)
         self.game_state.crossed_tiles_to_commit = []
 
         self.progress_var.set(self.game_state.toss_counter)
-        self.game_state.tossed = False
-        self.toss()
+        self.update_statusbar()
+
+        if self.game_state.toss_counter == 30:
+            msgbox.showinfo("Game Over", "Game over, final score: " + str(self.calc_score()))
+            # todo: display score details
+            self.game_state.finish()
+            return
+        else:
+            self.game_state.tossed = False
+            self.toss()
 
     def check_click(self, x, y):
         if not self.game_state.started or not self.game_state.tossed:
@@ -234,6 +282,7 @@ class Application(tk.Frame):
         # always be able to remove a cross to commit
         if (x, y) in self.game_state.crossed_tiles_to_commit:
             self.game_state.crossed_tiles_to_commit.remove((x, y))
+            self.update_statusbar()
             return True
 
         # Xs left to place?
@@ -266,7 +315,37 @@ class Application(tk.Frame):
 
         # all checks passed
         self.game_state.crossed_tiles_to_commit.append((x, y))
+        self.update_statusbar()
         return True
+
+    def update_statusbar(self, error_msg=None):
+        state = self.game_state
+
+        if error_msg:
+            self.statusbar['text'] = error_msg
+            return
+
+        if not state.started:
+            self.statusbar['text'] = "Game not started yet"
+            return
+
+        turn = "Turn {:>2}/30".format(state.toss_counter)
+        jokers = "Jokers left: " + str(state.joker_count)
+        placed_crosses = "Crosses placed: " + str(len(state.crossed_tiles_to_commit))
+        score = "Score: " + str(self.calc_score())
+
+        self.statusbar['text'] = "{} {} {} {}".format(turn, jokers, placed_crosses, score)
+
+    def calc_score(self):
+        state = self.game_state
+        score = state.joker_count
+        score += sum([5 if v == 21 else 0 for v in state.colors_crossed.values()])
+        score += sum([ln.POINTS_PER_COLUMN[i] if v == 7 else 0 for i, v in zip(range(state.board.width), state.columns_crossed)])
+        score += (-2) * (state.board.width - state.stars_crossed)
+        return score
+
+    def update_column_finished_indicators(self):
+        pass  # todo
 
 
 def main():
