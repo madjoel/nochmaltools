@@ -133,18 +133,14 @@ class Application(tk.Frame):
             self.board_column_point_labels.append(lbl)
 
         # bottom buttons
-        self.toss_btn = tk.Button(self, text='Toss')
-        self.toss_btn.grid(row=10, column=0, columnspan=3, sticky='W')
-        self.toss_btn.bind("<Button-1>", self.toss)
-
         self.color_dice_1 = ColorButton(self, Color.UNINITIALIZED, -1, -1)
-        self.color_dice_1.grid(row=10, column=3)
+        self.color_dice_1.grid(row=10, column=4)
         self.color_dice_2 = ColorButton(self, Color.UNINITIALIZED, -1, -1)
-        self.color_dice_2.grid(row=10, column=4)
+        self.color_dice_2.grid(row=10, column=5)
         self.number_dice_1 = tk.Label(self, text='0')
-        self.number_dice_1.grid(row=10, column=5)
+        self.number_dice_1.grid(row=10, column=6)
         self.number_dice_2 = tk.Label(self, text='0')
-        self.number_dice_2.grid(row=10, column=6)
+        self.number_dice_2.grid(row=10, column=7)
 
         self.commit_btn = tk.Button(self, text='Commit')
         self.commit_btn.grid(row=10, column=8, columnspan=3, sticky='W')
@@ -175,9 +171,9 @@ class Application(tk.Frame):
             return
 
         self.game_state.started = True
-        self.toss(None)
+        self.toss()
 
-    def toss(self, _e):
+    def toss(self):
         if not self.game_state.started or self.game_state.tossed:
             return
 
@@ -221,7 +217,7 @@ class Application(tk.Frame):
 
         self.progress_var.set(self.game_state.toss_counter)
         self.game_state.tossed = False
-        self.toss(None)  # TODO: check if nice or not
+        self.toss()
 
     def check_click(self, x, y):
         if not self.game_state.started or not self.game_state.tossed:
