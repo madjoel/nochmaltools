@@ -113,6 +113,8 @@ class Application(tk.Frame):
         # top Letters
         for x in range(ln.DEFAULT_BOARD_WIDTH):
             lbl = tk.Label(self, text=chr(65 + x))
+            if x == 7:
+                lbl['fg'] = 'red'
             lbl.grid(row=1, column=x)
 
         # board buttons
@@ -130,6 +132,8 @@ class Application(tk.Frame):
         for x in range(ln.DEFAULT_BOARD_WIDTH):
             lbl = tk.Label(self, text=ln.POINTS_PER_COLUMN[x])
             lbl.grid(row=9, column=x)
+            if x == 7:
+                lbl['fg'] = 'red'
             self.board_column_point_labels.append(lbl)
 
         # bottom buttons
