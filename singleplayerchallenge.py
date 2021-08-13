@@ -6,7 +6,6 @@ import time
 
 import tkinter as tk
 import tkinter.messagebox as msgbox
-from tkinter import ttk
 import tkinter.filedialog as tkfd
 from PIL import Image, ImageTk
 
