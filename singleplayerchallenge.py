@@ -204,6 +204,8 @@ class Application(tk.Frame):
 
     def start_game(self, _e):
         if self.game_state.board is None or self.game_state.started:
+            if self.game_state.board is None:
+                self.update_statusbar("No board loaded")
             return
 
         self.game_state.start()
