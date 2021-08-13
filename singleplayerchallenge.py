@@ -271,6 +271,11 @@ class Application(tk.Frame):
                 self.update_statusbar("Invalid selection, tile ({}, {}) is not reachable".format(chr(x + 65), y+1))
                 return
 
+        # check if component in itself is fully connected
+        if len(ln._get_connected_coords(self.game_state.crossed_tiles_to_commit)) > 1:
+            self.update_statusbar("Invalid selection, the placed crosses are not fully connected")
+            return
+
         # all checks passed, update game state
         for (x, y) in self.game_state.crossed_tiles_to_commit:
             self.board_buttons[x][y].commit()
