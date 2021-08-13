@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import math
 import os
 import random
 import time
@@ -11,6 +11,23 @@ from PIL import Image, ImageTk
 
 import libnochmal as ln
 from libnochmal import Color
+
+
+GAME_OVER_MSGS = [
+    'Das grenzt ja schon an Arbeitsverweigerung.',
+    'Dabei sein ist alles.',
+    'Da muss wohl noch etwas geübt werden.',
+    'Nicht ganz schlecht.',
+    'Na, wird doch langsam.',
+    'Gut, aber das geht noch besser.',
+    'Das war wohl nicht dein erstes Mal...',
+    'Klasse! Das lief ja gut.',
+    'Hoffentlich ohne Schummeln geschafft!',
+    'Super! Welch grandioses Ergebnis!',
+    'Du könntest auch professioneller „NOCH MAL!“-Spieler sein.',
+    'Wirst du „Glückspilz“ oder „The Brain“ genannt?',
+    'Es gibt also doch Superhelden!',
+]
 
 
 class ColorButton(tk.Button):
@@ -297,7 +314,9 @@ class Application(tk.Frame):
                                          "Joker bonus:\t{1[2]:>3}\n"
                                          "Star penalty:\t{1[3]:>3}\n"
                                          "-----------------------------\n"
-                                         "Total score:\t{0}".format(sum(score), score))
+                                         "Total score:\t{0}\n"
+                                         "\n"
+                                         "{2}".format(sum(score), score, self.get_game_over_msg()))
             self.game_state.finish()
             return
         else:
@@ -386,6 +405,21 @@ class Application(tk.Frame):
                      zip(range(state.board.width), state.columns_crossed)]),  # column bonus
                 state.joker_count,  # joker bonus
                 (-2) * (state.board.width - state.stars_crossed)]  # star penalty
+
+    def get_game_over_msg(self, score=None):
+        if score is None:
+            score = sum(self.calc_score())
+
+        if score < 0:
+            return GAME_OVER_MSGS[0]
+
+        if score == 0:
+            return GAME_OVER_MSGS[1]
+
+        if score > 40:
+            return GAME_OVER_MSGS[-1]
+
+        return GAME_OVER_MSGS[math.ceil(float(score) / 4.0) + 1]
 
     def update_column_finished_indicators(self):
         for i in range(len(self.board_column_point_labels)):
