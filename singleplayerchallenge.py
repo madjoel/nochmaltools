@@ -282,7 +282,7 @@ class Application(tk.Frame):
 
     def check_click(self, x, y):
         if not self.game_state.started or not self.game_state.tossed:
-            return False
+            return False  # todo: error messages
 
         # no already committed cross
         if (x, y) in self.game_state.crossed_tiles:
@@ -344,6 +344,7 @@ class Application(tk.Frame):
         score = "Score: " + str(sum(self.calc_score()))
 
         self.statusbar['text'] = "{} {} {} {}".format(turn, jokers, placed_crosses, score)
+        self.update_column_finished_indicators()
 
     def calc_score(self):
         state = self.game_state
@@ -354,7 +355,9 @@ class Application(tk.Frame):
                 (-2) * (state.board.width - state.stars_crossed)]  # star penalty
 
     def update_column_finished_indicators(self):
-        pass  # todo
+        for i in range(len(self.board_column_point_labels)):
+            if self.game_state.columns_crossed[i] == self.game_state.board.height:
+                self.board_column_point_labels[i]['bg'] = 'green'
 
 
 def main():
