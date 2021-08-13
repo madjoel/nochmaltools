@@ -36,7 +36,7 @@ class ColorButton(tk.Button):
         self.color = color
         self.config(bg=color.to_rgb(), activebackground=color.to_rgb_secondary())
 
-    def click(self, _event):
+    def click(self):
         if not self.application.check_click(self.x, self.y):
             return
 
@@ -121,13 +121,11 @@ class Application(tk.Frame):
         Application.O_IMAGE = ImageTk.PhotoImage(Image.open(script_path + '/img/o.png'))
 
         # top buttons
-        self.load_board_btn = tk.Button(self, text='Open Board')
+        self.load_board_btn = tk.Button(self, text='Open Board', command=self.open_board)
         self.load_board_btn.grid(row=0, column=0, columnspan=4, sticky='W')
-        self.load_board_btn.bind("<Button-1>", self.open_board)
 
-        self.start_game_btn = tk.Button(self, text='Start Game')
+        self.start_game_btn = tk.Button(self, text='Start Game', command=self.start_game)
         self.start_game_btn.grid(row=0, column=4, columnspan=4)
-        self.start_game_btn.bind("<Button-1>", self.start_game)
 
         # top Letters
         for x in range(ln.DEFAULT_BOARD_WIDTH):
@@ -142,7 +140,7 @@ class Application(tk.Frame):
             self.board_buttons.append([])
             for y in range(ln.DEFAULT_BOARD_HEIGHT):
                 btn = ColorButton(self, Color.UNINITIALIZED, x, y)
-                btn.bind("<Button-1>", btn.click)
+                btn['command'] = btn.click
                 btn.grid(row=(y + 2), column=x)
                 self.board_buttons[x].append(btn)
 
@@ -165,9 +163,8 @@ class Application(tk.Frame):
         self.number_dice_2 = tk.Label(self, text='0')
         self.number_dice_2.grid(row=10, column=7)
 
-        self.commit_btn = tk.Button(self, text='Commit')
+        self.commit_btn = tk.Button(self, text='Commit', command=self.commit)
         self.commit_btn.grid(row=10, column=8, columnspan=3, sticky='W')
-        self.commit_btn.bind("<Button-1>", self.commit)
 
         # status bar
         self.sep = tk.Label(self, text='_______________________________________________________________')
@@ -175,7 +172,7 @@ class Application(tk.Frame):
         self.statusbar = tk.Label(self, text='')
         self.statusbar.grid(row=12, column=0, columnspan=15, sticky='W')
 
-    def open_board(self, _event):
+    def open_board(self):
         if self.game_state.board:
             if msgbox.askyesno("Reset Game", "Do you want start a new game? Current progress will be lost."):
                 self.clear_game()
@@ -201,7 +198,7 @@ class Application(tk.Frame):
             for y in range(board.height):
                 self.board_buttons[x][y].set_by_tile(board.get_tile_at(x, y))
 
-    def start_game(self, _e):
+    def start_game(self):
         if self.game_state.board is None or self.game_state.started:
             if self.game_state.board is None:
                 self.update_statusbar("No board loaded")
@@ -238,7 +235,7 @@ class Application(tk.Frame):
 
         self.game_state.inc_toss_count()
 
-    def commit(self, _e):
+    def commit(self):
         if not self.game_state.started or not self.game_state.tossed:
             self.update_statusbar("Game not started yet")
             return
