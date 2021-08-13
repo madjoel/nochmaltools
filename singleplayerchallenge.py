@@ -54,6 +54,13 @@ class ColorButton(tk.Button):
     def commit(self):
         self['image'] = Application.CROSS_IMAGE
 
+    def reset(self):
+        self.color = Color.UNINITIALIZED
+        self.star = False
+        self.crossed = False
+        self['image'] = Application.CIRCLE_IMAGE
+        self.set_color(self.color)
+
 
 class SinglePlayerGameState:
     def __init__(self):
@@ -174,8 +181,11 @@ class Application(tk.Frame):
         self.statusbar.grid(row=12, column=0, columnspan=15, sticky='W')
 
     def open_board(self, _event):
-        if self.game_state.started:
-            pass  # todo: ask if should clear
+        if self.game_state.board:
+            if msgbox.askyesno("Reset Game", "Do you want start a new game? Current progress will be lost."):
+                self.clear_game()
+            else:
+                return
 
         f = tkfd.askopenfilename(defaultextension='.dat')
         if len(f) == 0:
@@ -206,7 +216,10 @@ class Application(tk.Frame):
         self.update_statusbar()
 
     def clear_game(self):
-        pass  # todo
+        self.game_state = SinglePlayerGameState()
+        for col in self.board_buttons:
+            for btn in col:
+                btn.reset()
 
     def toss(self):
         if not self.game_state.started or self.game_state.tossed:
