@@ -142,6 +142,8 @@ class Application(tk.Frame):
                 btn = ColorButton(self, Color.UNINITIALIZED, x, y)
                 btn['command'] = btn.click
                 btn.grid(row=(y + 2), column=x)
+                if x == 7:
+                    btn['highlightbackground'] = '#808080'
                 self.board_buttons[x].append(btn)
 
         # bottom points per column
