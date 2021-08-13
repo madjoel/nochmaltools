@@ -130,10 +130,6 @@ class Application(tk.Frame):
         self.start_game_btn.grid(row=0, column=4, columnspan=4)
         self.start_game_btn.bind("<Button-1>", self.start_game)
 
-        self.progress_var = tk.IntVar(self, value=0)
-        self.progressbar = ttk.Progressbar(self, maximum=30, variable=self.progress_var)
-        self.progressbar.grid(row=0, column=10, columnspan=4, sticky='E')
-
         # top Letters
         for x in range(ln.DEFAULT_BOARD_WIDTH):
             lbl = tk.Label(self, text=chr(65 + x))
@@ -286,7 +282,6 @@ class Application(tk.Frame):
         self.game_state.crossed_tiles.extend(self.game_state.crossed_tiles_to_commit)
         self.game_state.crossed_tiles_to_commit = []
 
-        self.progress_var.set(self.game_state.toss_counter)
         self.update_statusbar()
 
         if self.game_state.toss_counter == 30:
