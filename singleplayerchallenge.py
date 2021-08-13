@@ -233,6 +233,8 @@ class Application(tk.Frame):
         for col in self.board_buttons:
             for btn in col:
                 btn.reset()
+        for lbl in self.board_column_point_labels:
+            lbl['bg'] = self['bg']
 
     def toss(self):
         if not self.game_state.started or self.game_state.tossed:
