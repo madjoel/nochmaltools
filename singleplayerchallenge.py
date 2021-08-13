@@ -170,7 +170,7 @@ class Application(tk.Frame):
         # status bar
         self.sep = tk.Label(self, text='_______________________________________________________________')
         self.sep.grid(row=11, column=0, columnspan=15)
-        self.statusbar = tk.Label(self, text='status bar text here')
+        self.statusbar = tk.Label(self, text='')
         self.statusbar.grid(row=12, column=0, columnspan=15, sticky='W')
 
     def open_board(self, _event):
@@ -201,6 +201,7 @@ class Application(tk.Frame):
             return
 
         self.game_state.start()
+        self.update_statusbar()
         self.toss()
         self.update_statusbar()
 
@@ -282,10 +283,12 @@ class Application(tk.Frame):
 
     def check_click(self, x, y):
         if not self.game_state.started or not self.game_state.tossed:
-            return False  # todo: error messages
+            self.update_statusbar("Game not started yet")
+            return False
 
         # no already committed cross
         if (x, y) in self.game_state.crossed_tiles:
+            self.update_statusbar("Cannot uncross this tile")
             return False
 
         # always be able to remove a cross to commit
@@ -296,36 +299,44 @@ class Application(tk.Frame):
 
         # Xs left to place?
         if len(self.game_state.crossed_tiles_to_commit) >= min(max(self.game_state.rolled_numbers), 5):
+            self.update_statusbar("No more tiles can be crossed")
             return False
 
         # color was tossed?
         if Color.UNINITIALIZED not in self.game_state.rolled_colors and self.game_state.board.get_color_at(x, y) not in self.game_state.rolled_colors:
+            self.update_statusbar("This color wasn't tossed")
             return False
 
         # only one component
         if len(self.game_state.crossed_tiles_to_commit) > 0:
             component = self.game_state.board.get_component(self.game_state.crossed_tiles_to_commit[0][0], self.game_state.crossed_tiles_to_commit[0][1])
             if (x, y) not in component:
+                self.update_statusbar("You can't cross tiles from multiple components")
                 return False
 
         # column 7 (H, the middle) reachable?
-        if not x == 7:
-            coords = set(self.game_state.crossed_tiles).union(set(self.game_state.crossed_tiles_to_commit))
-            coords.add((x, y))
-            reachable_coords = ln._get_connected_coords(coords, (x, y))[0]
-
-            hcol_reached = False
-            for i in range(self.game_state.board.height):
-                if (7, i) in reachable_coords:
-                    hcol_reached = True
-
-            if not hcol_reached:
-                return False
+        if not self._tile_is_reachable(x, y):
+            self.update_statusbar("This tile is not reachable")
+            return False
 
         # all checks passed
         self.game_state.crossed_tiles_to_commit.append((x, y))
         self.update_statusbar()
         return True
+
+    def _tile_is_reachable(self, x, y):
+        if x == 7:
+            return True
+
+        coords = set(self.game_state.crossed_tiles).union(set(self.game_state.crossed_tiles_to_commit))
+        coords.add((x, y))
+        reachable_coords = ln._get_connected_coords(coords, (x, y))[0]
+
+        for i in range(self.game_state.board.height):
+            if (7, i) in reachable_coords:
+                return True
+
+        return False
 
     def update_statusbar(self, error_msg=None):
         state = self.game_state
@@ -340,10 +351,9 @@ class Application(tk.Frame):
 
         turn = "Turn {:>2}/30".format(state.toss_counter)
         jokers = "Jokers left: " + str(state.joker_count)
-        placed_crosses = "Crosses placed: " + str(len(state.crossed_tiles_to_commit))
         score = "Score: " + str(sum(self.calc_score()))
 
-        self.statusbar['text'] = "{} {} {} {}".format(turn, jokers, placed_crosses, score)
+        self.statusbar['text'] = "{} {} {}".format(turn, jokers, score)
         self.update_column_finished_indicators()
 
     def calc_score(self):
