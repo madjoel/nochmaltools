@@ -2,6 +2,7 @@
 
 import os
 import random
+import time
 
 import tkinter as tk
 import tkinter.messagebox as msgbox
@@ -210,17 +211,19 @@ class Application(tk.Frame):
         if not self.game_state.started or self.game_state.tossed:
             return
 
-        # todo: animation
+        for i in range(random.randint(11, 17)):
+            self.game_state.rolled_numbers[0] = random.randint(1, 6)
+            self.game_state.rolled_numbers[1] = random.randint(1, 6)
+            self.game_state.rolled_colors[0] = random.choice(Color.ref_list(True))
+            self.game_state.rolled_colors[1] = random.choice(Color.ref_list(True))
 
-        self.game_state.rolled_numbers[0] = random.randint(1, 6)
-        self.game_state.rolled_numbers[1] = random.randint(1, 6)
-        self.game_state.rolled_colors[0] = random.choice(Color.ref_list(True))
-        self.game_state.rolled_colors[1] = random.choice(Color.ref_list(True))
+            self.color_dice_1.set_color(self.game_state.rolled_colors[0])
+            self.color_dice_2.set_color(self.game_state.rolled_colors[1])
+            self.number_dice_1['text'] = str(self.game_state.rolled_numbers[0]).replace('6', '?')
+            self.number_dice_2['text'] = str(self.game_state.rolled_numbers[1]).replace('6', '?')
+            self.update()
 
-        self.color_dice_1.set_color(self.game_state.rolled_colors[0])
-        self.color_dice_2.set_color(self.game_state.rolled_colors[1])
-        self.number_dice_1['text'] = str(self.game_state.rolled_numbers[0]).replace('6', '?')
-        self.number_dice_2['text'] = str(self.game_state.rolled_numbers[1]).replace('6', '?')
+            time.sleep(0.075 + 0.125 * (i/17))
 
         self.game_state.inc_toss_count()
 
