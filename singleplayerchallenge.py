@@ -230,6 +230,7 @@ class Application(tk.Frame):
 
     def commit(self, _e):
         if not self.game_state.started or not self.game_state.tossed:
+            self.update_statusbar("Game not started yet")
             return
 
         jokers_used = 0
@@ -242,12 +243,21 @@ class Application(tk.Frame):
                 if 6 in self.game_state.rolled_numbers:
                     jokers_used += 1
                 else:
+                    self.update_statusbar("{0} tiles were crossed, but the dices rolled {1[0]} and {1[1]}"
+                                          .format(len(self.game_state.crossed_tiles_to_commit), self.game_state.rolled_numbers))
                     return  # invalid set of crosses
 
             if self.game_state.board.get_color_at(self.game_state.crossed_tiles_to_commit[0][0], self.game_state.crossed_tiles_to_commit[0][1]) not in self.game_state.rolled_colors:
                 jokers_used += 1
 
             if not self.game_state.use_joker(jokers_used):
+                self.update_statusbar("Not enough jokers left")
+                return
+
+        # check if all tiles to commit are reachable
+        for (x, y) in self.game_state.crossed_tiles_to_commit:
+            if not self._tile_is_reachable(x, y):
+                self.update_statusbar("Invalid selection, tile ({}, {}) is not reachable".format(chr(x + 65), y+1))
                 return
 
         # all checks passed, update game state
