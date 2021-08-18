@@ -121,6 +121,8 @@ class Application(tk.Frame):
     CROSS_IMAGE = None
     CROSS_GRAY_IMAGE = None
 
+    BOARDS = []
+
     def __init__(self, master=None):
         super().__init__(master)
         self.master = master
@@ -134,6 +136,13 @@ class Application(tk.Frame):
         Application.CIRCLE_IMAGE = ImageTk.PhotoImage(Image.open(script_path + '/img/circle.png'))
         Application.CROSS_IMAGE = ImageTk.PhotoImage(Image.open(script_path + '/img/cross.png'))
         Application.CROSS_GRAY_IMAGE = ImageTk.PhotoImage(Image.open(script_path + '/img/cross-gray.png'))
+
+        boards_dir = script_path + '/boards'
+        boards_dir_files = os.listdir(boards_dir)
+        boards_dir_files.sort()
+        assert len(boards_dir_files) == 7
+        for file in boards_dir_files:
+            Application.BOARDS.append(ln.read_board_from_file(os.path.join(boards_dir, file)))
 
         # top buttons
         self.load_board_btn = tk.Button(self, text='Open Board', command=self.open_board)
