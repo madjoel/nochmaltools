@@ -263,6 +263,10 @@ class Application(tk.Frame):
                 btn.reset()
         for lbl in self.board_column_point_labels:
             lbl['bg'] = self['bg']
+        self.color_dice_1.set_color(Color.UNINITIALIZED)
+        self.color_dice_2.set_color(Color.UNINITIALIZED)
+        self.number_dice_1['text'] = '0'
+        self.number_dice_2['text'] = '0'
 
     def toss(self):
         if not self.game_state.started or self.game_state.tossed:
