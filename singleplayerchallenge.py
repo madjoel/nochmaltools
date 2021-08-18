@@ -145,11 +145,29 @@ class Application(tk.Frame):
             Application.BOARDS.append(ln.read_board_from_file(os.path.join(boards_dir, file)))
 
         # top buttons
-        self.load_board_btn = tk.Button(self, text='Open Board', command=self.open_board)
-        self.load_board_btn.grid(row=0, column=0, columnspan=4, sticky='W')
+        self.choose_board_lbl = tk.Label(self, text='Choose Board:')
+        self.choose_board_lbl.grid(row=0, column=0, columnspan=5, sticky='W')
+
+        # board options
+        self.board_chooser_buttons = []
+        for color, index in zip([Color.UNINITIALIZED, Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE, Color.UNINITIALIZED, Color.YELLOW], range(7)):
+            btn = ColorButton(self, color, -1, -1)
+            if index == 0:
+                btn['bg'] = 'black'
+                btn['activebackground'] = '#555555'
+            if index == 5:
+                btn['bg'] = 'purple'
+                btn['activebackground'] = '#BB00BB'
+            btn.grid(row=0, column=(4+index))
+            btn['command'] = lambda i=index: self.open_board(Application.BOARDS[i])
+            self.board_chooser_buttons.append(btn)
+
+        # disabled for now, maybe use command line args to load a custom board
+        # self.load_board_btn = tk.Button(self, text='Open Board', command=self.open_board)
+        # self.load_board_btn.grid(row=0, column=5, columnspan=4, sticky='W')
 
         self.start_game_btn = tk.Button(self, text='Start Game', command=self.start_game)
-        self.start_game_btn.grid(row=0, column=4, columnspan=4)
+        self.start_game_btn.grid(row=0, column=11, columnspan=4, sticky='E')
 
         # top Letters
         for x in range(ln.DEFAULT_BOARD_WIDTH):
@@ -198,25 +216,28 @@ class Application(tk.Frame):
         self.statusbar = tk.Label(self, text='')
         self.statusbar.grid(row=12, column=0, columnspan=15, sticky='W')
 
-    def open_board(self):
-        if self.game_state.board:
+    def open_board(self, board=None):
+        if self.game_state.board and self.game_state.started:
             if msgbox.askyesno("Reset Game", "Do you want start a new game? Current progress will be lost."):
                 self.clear_game()
             else:
                 return
 
-        f = tkfd.askopenfilename(defaultextension='.dat')
-        if len(f) == 0:
-            return
+        if board is None:
+            f = tkfd.askopenfilename(defaultextension='.dat')
+            if len(f) == 0:
+                return
 
-        board = None
-        try:
-            board = ln.read_board_from_file(f)
-        finally:
-            if board is None:
-                print("Could not load board from file '{}'".format(f))
-            else:
-                self._load_board(board)
+            try:
+                board = ln.read_board_from_file(f)
+            finally:
+                if board is None:
+                    print("Could not load board from file '{}'".format(f))
+                else:
+                    self._load_board(board)
+        else:
+            self.clear_game()
+            self._load_board(board)
 
     def _load_board(self, board):
         self.game_state.board = board
