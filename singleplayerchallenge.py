@@ -159,7 +159,7 @@ class Application(tk.Frame):
                 btn['bg'] = 'purple'
                 btn['activebackground'] = '#BB00BB'
             btn.grid(row=0, column=(4+index))
-            btn['command'] = lambda i=index: self.open_board(Application.BOARDS[i])
+            btn['command'] = lambda i=index, b=btn: self.open_board(Application.BOARDS[i], b)
             self.board_chooser_buttons.append(btn)
 
         # disabled for now, maybe use command line args to load a custom board
@@ -216,12 +216,15 @@ class Application(tk.Frame):
         self.statusbar = tk.Label(self, text='')
         self.statusbar.grid(row=12, column=0, columnspan=15, sticky='W')
 
-    def open_board(self, board=None):
+    def open_board(self, board=None, btn=None):
         if self.game_state.board and self.game_state.started:
             if msgbox.askyesno("Reset Game", "Do you want start a new game? Current progress will be lost."):
                 self.clear_game()
             else:
                 return
+
+        for b in self.board_chooser_buttons:
+            b['image'] = Application.CIRCLE_IMAGE
 
         if board is None:
             f = tkfd.askopenfilename(defaultextension='.dat')
@@ -238,6 +241,8 @@ class Application(tk.Frame):
         else:
             self.clear_game()
             self._load_board(board)
+            if btn is not None:
+                btn['image'] = Application.CROSS_GRAY_IMAGE
 
     def _load_board(self, board):
         self.game_state.board = board
@@ -267,6 +272,7 @@ class Application(tk.Frame):
         self.color_dice_2.set_color(Color.UNINITIALIZED)
         self.number_dice_1['text'] = '0'
         self.number_dice_2['text'] = '0'
+        self.update_statusbar()
 
     def toss(self):
         if not self.game_state.started or self.game_state.tossed:
