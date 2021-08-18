@@ -120,7 +120,6 @@ class Application(tk.Frame):
     CIRCLE_IMAGE = None
     CROSS_IMAGE = None
     CROSS_GRAY_IMAGE = None
-    O_IMAGE = None
 
     def __init__(self, master=None):
         super().__init__(master)
@@ -135,7 +134,6 @@ class Application(tk.Frame):
         Application.CIRCLE_IMAGE = ImageTk.PhotoImage(Image.open(script_path + '/img/circle.png'))
         Application.CROSS_IMAGE = ImageTk.PhotoImage(Image.open(script_path + '/img/cross.png'))
         Application.CROSS_GRAY_IMAGE = ImageTk.PhotoImage(Image.open(script_path + '/img/cross-gray.png'))
-        Application.O_IMAGE = ImageTk.PhotoImage(Image.open(script_path + '/img/o.png'))
 
         # top buttons
         self.load_board_btn = tk.Button(self, text='Open Board', command=self.open_board)
