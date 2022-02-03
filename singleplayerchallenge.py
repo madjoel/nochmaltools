@@ -210,6 +210,10 @@ class Application(tk.Frame):
         self.commit_btn = tk.Button(self, text='Commit', command=self.commit)
         self.commit_btn.grid(row=10, column=8, columnspan=3, sticky='W')
 
+        self.show_reachable_btn = tk.Button(self, text='SR', command=self.toggle_reachable_tiles)
+        self.show_reachable_btn.grid(row=10, column=13, columnspan=2, sticky='W')
+        self.reachable_tiles_toggled = False
+
         # status bar
         self.sep = tk.Label(self, text='_______________________________________________________________')
         self.sep.grid(row=11, column=0, columnspan=15)
@@ -405,6 +409,29 @@ class Application(tk.Frame):
         self.game_state.crossed_tiles_to_commit.append((x, y))
         self.update_statusbar()
         return True
+
+    def toggle_reachable_tiles(self):
+        reachable_coords = set()
+
+        if self.reachable_tiles_toggled:
+            for (x, y) in [(x, y) for x in range(ln.DEFAULT_BOARD_WIDTH) for y in range(ln.DEFAULT_BOARD_HEIGHT)]:
+                self.board_buttons[x][y]['highlightbackground'] = '#D9D9D9'
+            for (x, y) in [(7, y) for y in range(ln.DEFAULT_BOARD_HEIGHT)]:
+                self.board_buttons[x][y]['highlightbackground'] = '#808080'
+        else:
+            all_coords = set([(x, y) for x in range(ln.DEFAULT_BOARD_WIDTH) for y in range(ln.DEFAULT_BOARD_HEIGHT)])
+            reached_coords = set(self.game_state.crossed_tiles)
+
+            for coord in reached_coords:
+                reachable_coords = reachable_coords.union(ln.get_neighbours(coord, all_coords))
+
+            reachable_coords = reachable_coords - reached_coords
+            reachable_coords = reachable_coords.union([(7, y) for y in range(ln.DEFAULT_BOARD_HEIGHT)])
+
+            for (x, y) in reachable_coords:
+                self.board_buttons[x][y]['highlightbackground'] = '#000000'
+
+        self.reachable_tiles_toggled = not self.reachable_tiles_toggled
 
     def _tile_is_reachable(self, x, y):
         if x == 7:
