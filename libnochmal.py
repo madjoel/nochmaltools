@@ -230,7 +230,7 @@ def read_board_from_file(filename):
         return board
 
 
-def write_board_to_file(board, filename):
+def write_board_to_file(board: Board, filename):
     with open(filename, 'w') as file:
         lines = ["{}\n".format(board.width), "{}\n".format(board.height)]
         lines.extend(str(board).splitlines(True))
@@ -411,7 +411,29 @@ def fill_randomly_smarter(board):
 
 def fill_smart(board, state):
     # board = Board()
-    components = [(c, n) for n in range(6, 0, -1) for c in Color.ref_list()]
+    #components = [(c, n) for n in range(6, 0, -1) for c in Color.ref_list()]
+
+    components_order = dict(zip(Color.ref_list(), [list(range(6, 0, -1)) for _ in range(6)]))
+
+    color_order = Color.ref_list()
+    RNG.shuffle(color_order)
+
+    for c in color_order:
+        RNG.shuffle(components_order[c])
+
+    components = list()
+    for component_index in range(6):
+        for color_index in range(len(color_order)):
+            components.append((color_order[color_index], components_order[color_order[color_index]][component_index]))
+
+    for i in range(len(components)):
+        print("{:0>2}".format(i), end=" ")
+    print()
+
+    for (c, n) in components:
+        print("{}{}".format(c.value.upper(), n), end=" ")
+    print()
+
     # RNG.shuffle(components)  # TODO: check if makes sense
     _fill_smart_backtrack(board, components, 0, state)
 
