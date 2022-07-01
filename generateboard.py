@@ -29,7 +29,7 @@ state = libnochmal.BacktrackingState()
 
 stopFlag = Event()
 # thread = PerpetualTimer(stopFlag, lambda: print(board, end="\n\n"), 1.0)
-thread = libnochmal.PerpetualTimer(stopFlag, lambda: print("\rlvl. {}, try no. {}".format(state.level, state.tries), end=""), 0.1)
+thread = libnochmal.PerpetualTimer(stopFlag, lambda: print("\rlvl. {:0>2}, try no. {}".format(state.level, state.tries), end=""), 0.1)
 thread.start()
 
 libnochmal.fill_smart(board, state)
