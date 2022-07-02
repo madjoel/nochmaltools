@@ -139,7 +139,7 @@ class Application(tk.Frame):
         boards_dir = script_path + '/boards'
         boards_dir_files = os.listdir(boards_dir)
         boards_dir_files.sort()
-        assert len(boards_dir_files) == 7
+        assert len(boards_dir_files) == 8
         for file in boards_dir_files:
             Application.BOARDS.append(ln.read_board_from_file(os.path.join(boards_dir, file)))
 
@@ -149,7 +149,7 @@ class Application(tk.Frame):
 
         # board options
         self.board_chooser_buttons = []
-        for color, index in zip([Color.UNINITIALIZED, Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE, Color.UNINITIALIZED, Color.YELLOW], range(7)):
+        for color, index in zip([Color.UNINITIALIZED, Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE, Color.UNINITIALIZED, Color.YELLOW, Color.UNINITIALIZED], range(8)):
             btn = ColorButton(self, color, -1, -1)
             if index == 0:
                 btn['bg'] = 'black'
@@ -157,6 +157,9 @@ class Application(tk.Frame):
             if index == 5:
                 btn['bg'] = 'purple'
                 btn['activebackground'] = '#BB00BB'
+            if index == 7:
+                btn['bg'] = 'grey'
+                btn['activebackground'] = '#BBBBBB'
             btn.grid(row=0, column=(4+index))
             btn['command'] = lambda i=index, b=btn: self.open_board(Application.BOARDS[i], b)
             self.board_chooser_buttons.append(btn)
@@ -165,7 +168,7 @@ class Application(tk.Frame):
         # self.load_board_btn = tk.Button(self, text='Open Board', command=self.open_board)
         # self.load_board_btn.grid(row=0, column=5, columnspan=4, sticky='W')
 
-        self.start_game_btn = tk.Button(self, text='Start Game', command=self.start_game)
+        self.start_game_btn = tk.Button(self, text='Start', command=self.start_game)
         self.start_game_btn.grid(row=0, column=11, columnspan=4, sticky='E')
 
         # top Letters
