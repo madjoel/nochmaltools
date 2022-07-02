@@ -265,17 +265,32 @@ def check_color_distribution(board, lazy=False):
 
 
 # checks if all columns have one star and at least one tile of every color
+# also checks that all occurrences of a color are connected
 def check_columns(board, lazy=False):
     error_msgs = []
 
     for col in range(board.width):
         colors_seen = dict(zip(Color.ref_list(), [False for _ in range(len(Color.ref_list()))]))
+        last_color: Color = Color.UNINITIALIZED
         stars = 0
 
         for y in range(board.height):
-            colors_seen[board.get_tile_at(col, y).color] = True
+            current_color: Color = board.get_tile_at(col, y).color
+            if not colors_seen[current_color]:
+                colors_seen[current_color] = True
+            else:
+                if current_color == last_color:  # fine
+                    pass
+                else:  # not fine
+                    error_msgs.append("Column {} has multiple occurrences of color {} at row {}"
+                                      .format(col, current_color, y))
+                    if lazy:
+                        return error_msgs
+
             if board.get_tile_at(col, y).star:
                 stars += 1
+
+            last_color = current_color
 
         if stars != 1:
             error_msgs.append("Column {} has {} stars instead of 1".format(col, stars))
@@ -410,9 +425,7 @@ def fill_randomly_smarter(board):
 
 
 def fill_smart(board, state):
-    # board = Board()
-    #components = [(c, n) for n in range(6, 0, -1) for c in Color.ref_list()]
-
+    # components = [(c, n) for n in range(6, 0, -1) for c in Color.ref_list()]
     components_order = dict(zip(Color.ref_list(), [list(range(6, 0, -1)) for _ in range(6)]))
 
     color_order = Color.ref_list()
@@ -434,7 +447,6 @@ def fill_smart(board, state):
         print("{}{}".format(c.value.upper(), n), end=" ")
     print()
 
-    # RNG.shuffle(components)  # TODO: check if makes sense
     _fill_smart_backtrack(board, components, 0, state)
 
 
