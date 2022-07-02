@@ -7,7 +7,6 @@ import time
 import tkinter as tk
 import tkinter.messagebox as msgbox
 import tkinter.filedialog as tkfd
-from PIL import Image, ImageTk
 
 import libnochmal as ln
 from libnochmal import Color
@@ -132,10 +131,10 @@ class Application(tk.Frame):
 
         # load star and circle image
         script_path = os.path.dirname(os.path.realpath(__file__))
-        Application.STAR_IMAGE = ImageTk.PhotoImage(Image.open(script_path + '/img/star.png'))
-        Application.CIRCLE_IMAGE = ImageTk.PhotoImage(Image.open(script_path + '/img/circle.png'))
-        Application.CROSS_IMAGE = ImageTk.PhotoImage(Image.open(script_path + '/img/cross.png'))
-        Application.CROSS_GRAY_IMAGE = ImageTk.PhotoImage(Image.open(script_path + '/img/cross-gray.png'))
+        Application.STAR_IMAGE = tk.PhotoImage(file=script_path + '/img/star.png')
+        Application.CIRCLE_IMAGE = tk.PhotoImage(file=script_path + '/img/circle.png')
+        Application.CROSS_IMAGE = tk.PhotoImage(file=script_path + '/img/cross.png')
+        Application.CROSS_GRAY_IMAGE = tk.PhotoImage(file=script_path + '/img/cross-gray.png')
 
         boards_dir = script_path + '/boards'
         boards_dir_files = os.listdir(boards_dir)

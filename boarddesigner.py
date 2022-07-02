@@ -7,7 +7,6 @@ from enum import Enum, auto
 import tkinter as tk
 from threading import Thread, Event
 
-from PIL import Image, ImageTk
 import tkinter.filedialog as tkfd
 
 import libnochmal as ln
@@ -117,8 +116,8 @@ class Application(tk.Frame):
 
         # load star and circle image
         script_path = os.path.dirname(os.path.realpath(__file__))
-        self.star_image = ImageTk.PhotoImage(Image.open(script_path + '/img/star.png'))
-        self.circle_image = ImageTk.PhotoImage(Image.open(script_path + '/img/circle.png'))
+        self.star_image = tk.PhotoImage(file=script_path + '/img/star.png')
+        self.circle_image = tk.PhotoImage(file=script_path + '/img/circle.png')
 
         # tool tool bar
         self.top_tool_tool_bar = tk.Frame(self)
