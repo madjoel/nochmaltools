@@ -12,7 +12,6 @@ OFFSETS = [
     (-1, 0),
 ]
 SOLUTION_COUNTER = 0
-RNG = random.Random()
 
 DEFAULT_BOARD_WIDTH = 15
 DEFAULT_BOARD_HEIGHT = 7
@@ -406,20 +405,16 @@ def check_all(board, lazy=False):
 
 # --- generation functions ---
 
-def set_seed(seed):
-    RNG.seed(seed)
-
-
 # fill a board completely at random
-def fill_randomly(board):
+def fill_randomly(board: Board, rng: random.Random):
     for y in range(board.height):
         for x in range(board.width):
-            board.set_tile_at(x, y, Tile(RNG.choice(Color.ref_list())))
+            board.set_tile_at(x, y, Tile(rng.choice(Color.ref_list())))
 
 
 # fill a board a little smarter, but still randomly
 # seeds 8, 151, 213 were tested to work, for all seeds to work, this should be done by backtracking
-def fill_randomly_smarter(board):
+def fill_randomly_smarter(board: Board, rng: random.Random):
     color_counts = dict(zip(Color.ref_list(), [0 for _ in range(len(Color.ref_list()))]))
     available_colors = Color.ref_set()
 
@@ -430,36 +425,32 @@ def fill_randomly_smarter(board):
             if len(possible_colors) < 1:
                 print("FATAL: Ran out of valid colors for tile {}, {} - returning prematurely.".format(x, y))
 
-            c = RNG.choice(possible_colors)
+            c = rng.choice(possible_colors)
             board.set_tile_at(x, y, Tile(c))
             color_counts[c] += 1
             if color_counts[c] == 21:
                 available_colors.remove(c)
 
 
-def fill_smart(board, state):
+def create_random_component_order(rng: random.Random) -> List[Tuple[Color, int]]:
     # components = [(c, n) for n in range(6, 0, -1) for c in Color.ref_list()]
     components_order = dict(zip(Color.ref_list(), [list(range(6, 0, -1)) for _ in range(6)]))
 
     color_order = Color.ref_list()
-    RNG.shuffle(color_order)
+    rng.shuffle(color_order)
 
     for c in color_order:
-        RNG.shuffle(components_order[c])
+        rng.shuffle(components_order[c])
 
     components = list()
     for component_index in range(6):
         for color_index in range(len(color_order)):
             components.append((color_order[color_index], components_order[color_order[color_index]][component_index]))
 
-    for i in range(len(components)):
-        print("{:0>2}".format(i), end=" ")
-    print()
+    return components
 
-    for (c, n) in components:
-        print("{}{}".format(c.value.upper(), n), end=" ")
-    print()
 
+def fill_smart(board, state, components):
     _fill_smart_backtrack(board, components, 0, state)
 
 
@@ -546,7 +537,7 @@ def _get_free_tiles(board):
 
 
 # distribute stars in the board
-def distribute_stars(board, assume_no_stars=False):
+def distribute_stars(board, rng: random.Random, assume_no_stars=False):
     if not assume_no_stars:
         for y in range(board.height):
             for x in range(board.width):
@@ -556,7 +547,7 @@ def distribute_stars(board, assume_no_stars=False):
                     board.set_tile_at(x, y, tile)
 
     stars_per_color = dict(zip(Color.ref_list(), [set() for _ in range(len(Color.ref_list()))]))
-    _place_stars_backtrack(board, stars_per_color, 0)
+    _place_stars_backtrack(board, stars_per_color, 0, rng)
 
 
 def _star_is_placeable_at(board, stars_per_color, x, y):
@@ -576,18 +567,18 @@ def _star_is_placeable_at(board, stars_per_color, x, y):
     return True
 
 
-def _place_stars_backtrack(board, stars_per_color, col):
+def _place_stars_backtrack(board: Board, stars_per_color, col: int, rng: random.Random):
     if col == board.width:
         return True  # done
 
     row_indices = [i for i in range(board.height)]
-    RNG.shuffle(row_indices)
+    rng.shuffle(row_indices)
     for row in row_indices:
         if _star_is_placeable_at(board, stars_per_color, col, row):
             board.set_star_at(col, row)
             stars_per_color[board.get_tile_at(col, row).color].add((col, row))
 
-            if _place_stars_backtrack(board, stars_per_color, col + 1):
+            if _place_stars_backtrack(board, stars_per_color, col + 1, rng):
                 return True
             else:
                 board.set_star_at(col, row, False)
