@@ -482,13 +482,25 @@ def _fill_smart_backtrack(board, components, comp_index, state):
 
 
 def _combination_is_placeable(board, combination, color, free_space):
-    dont_check = []
     result = True
 
+    # line6-constraint
+    # to avoid having 6 tiles of the same color in a row this constraint is applied
+    if len(combination) == 6:
+        _, first_y = list(combination)[0]
+        all_the_same = True
+
+        for (_, y) in combination:
+            if first_y != y:
+                all_the_same = False
+                break
+
+        if all_the_same:
+            return False
+
     for (x, y) in combination:
-        if _tile_color_is_placeable_at(board, color, x, y, True, dont_check):
+        if _tile_color_is_placeable_at(board, color, x, y, True, combination):
             board.set_tile_at(x, y, Tile(color))
-            dont_check.append((x, y))
         else:
             result = False
             break
