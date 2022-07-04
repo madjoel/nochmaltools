@@ -210,7 +210,12 @@ class BacktrackingState:
 
 def read_board_from_file(filename):
     with open(filename, 'r') as file:
-        lines = file.readlines()
+        lines = []
+        for line in file.readlines():
+            if line.strip().startswith('#'):
+                continue
+            lines.append(line)
+
         width = int(lines[0].strip())
         height = int(lines[1].strip())
 
@@ -232,8 +237,13 @@ def read_board_from_file(filename):
         return board
 
 
-def write_board_to_file(board: Board, filename):
+def write_board_to_file(board: Board, filename, comment: str = ''):
     with open(filename, 'w') as file:
+        comment_lines = []
+        for cline in comment.splitlines(False):
+            comment_lines.append("# {}\n".format(cline))
+        file.writelines(comment_lines)
+
         lines = ["{}\n".format(board.width), "{}\n".format(board.height)]
         lines.extend(str(board).splitlines(True))
         file.writelines(lines)
