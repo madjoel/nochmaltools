@@ -29,14 +29,18 @@ thread.start()
 
 components = ln.create_random_component_order(RNG)
 
+order_str = ['', '']
 for i in range(len(components)):
     print("{:0>2}".format(i), end=" ")
+    order_str[0] += "{:0>2} ".format(i)
 print()
+order_str[0] = order_str[0].strip()
 
 for (c, n) in components:
     print("{}{}".format(c.value.upper(), n), end=" ")
+    order_str[1] += "{}{} ".format(c.value.upper(), n)
 print()
-
+order_str[1] = order_str[1].strip()
 
 started = datetime.now()
 
@@ -55,6 +59,17 @@ ln.distribute_stars(board, RNG)
 # the result
 print(board)
 
+# create generated board comment
+comment = "This board was generated using nochmaltools generateboard\n" \
+          "Generation started:  {}\n" \
+          "Generation finished: {}\n" \
+          "Duration:            {}\n" \
+          "Seed:                {}\n" \
+          "Component order:     {}\n" \
+          "                     {}\n" \
+          "Total tries:         {}".format(started, finished, (finished - started), seed, order_str[0], order_str[1],
+                                           state.tries)
+
 # write the board to file
 boardFileName = sys.argv[1]
-ln.write_board_to_file(board, boardFileName)
+ln.write_board_to_file(board, boardFileName, comment)
