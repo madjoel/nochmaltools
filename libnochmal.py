@@ -609,6 +609,13 @@ def _tile_color_is_placeable_at(board, color, x, y, check_neighbours=False, do_n
     if _get_capacity_for_color_in_column(board, color, x) < 1:
         return False
 
+    # only-one-color-component-per-column-constraint
+    # fail if there is already a tile of this color in this column which is not of the current component
+    for col in range(7):
+        tile = board.get_tile_at(x, col)
+        if tile and tile.color == color and not (x, col) in do_not_check_these_coords:
+            return False
+
     return True
 
 
