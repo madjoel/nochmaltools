@@ -22,6 +22,7 @@ print()
 # now check the board
 # - 21 tiles of each color
 # - each column contains at least one of each color
+# - each column contains tiles from exactly 5 components
 # - each column contains exactly one star
 # - each color consists of 6 connected components which contain 1, 2, 3, 4, 5 and 6 tiles
 # - each color has exactly 3 stars

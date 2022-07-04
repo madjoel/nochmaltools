@@ -3,6 +3,8 @@ from enum import Enum
 from math import factorial
 from threading import Thread
 
+from typing import Tuple, List
+
 OFFSETS = [
     (0, -1),
     (1, 0),
@@ -270,16 +272,17 @@ def check_columns(board, lazy=False):
     error_msgs = []
 
     for col in range(board.width):
-        colors_seen = dict(zip(Color.ref_list(), [False for _ in range(len(Color.ref_list()))]))
+        colors_seen = dict(zip(Color.ref_list(), [-1 for _ in range(len(Color.ref_list()))]))
         last_color: Color = Color.UNINITIALIZED
         stars = 0
 
         for y in range(board.height):
             current_color: Color = board.get_tile_at(col, y).color
-            if not colors_seen[current_color]:
-                colors_seen[current_color] = True
+            if colors_seen[current_color] == -1:
+                colors_seen[current_color] = y
             else:
-                if current_color == last_color:  # fine
+                if current_color == last_color or \
+                        (col, colors_seen[current_color]) in get_component_coords(board, col, y):  # fine
                     pass
                 else:  # not fine
                     error_msgs.append("Column {} has multiple occurrences of color {} at row {}"
@@ -298,7 +301,7 @@ def check_columns(board, lazy=False):
                 return error_msgs
 
         for (k, v) in colors_seen.items():
-            if not v:
+            if v == -1:
                 error_msgs.append("Column {} is missing the '{}' color".format(col, k))
                 if lazy:
                     return error_msgs
@@ -723,6 +726,21 @@ def get_neighbours(coord, coords=None):
             continue
         neighbours.append(neighbour)
     return neighbours
+
+
+def get_component_coords(board: Board, x: int, y: int) -> List[Tuple[int, int]]:
+    result = [(x, y)]
+    color = board.get_tile_at(x, y).color
+
+    queue = [(x, y)]
+    while len(queue) > 0:
+        coord = queue.pop(0)
+        for (nx, ny) in get_neighbours(coord):
+            if board.in_bounds(nx, ny) and (nx, ny) not in result and board.get_color_at(nx, ny) == color:
+                queue.append((nx, ny))
+                result.append((nx, ny))
+
+    return result
 
 
 # calculates the amount of unique combinations of size r in a collection of n elements
