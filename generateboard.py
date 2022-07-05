@@ -3,7 +3,7 @@
 import sys
 from random import Random
 from threading import Event
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import libnochmal as ln
 
