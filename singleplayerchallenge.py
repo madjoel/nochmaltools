@@ -144,8 +144,8 @@ class Application(tk.Frame):
             Application.BOARDS.append(ln.read_board_from_file(os.path.join(boards_dir, file)))
 
         # top buttons
-        self.choose_board_lbl = tk.Label(self, text='Choose Board:')
-        self.choose_board_lbl.grid(row=0, column=0, columnspan=5, sticky='W')
+        self.choose_board_lbl = tk.Label(self, text='Board:')
+        self.choose_board_lbl.grid(row=0, column=0, columnspan=3, sticky='W')
 
         # board options
         self.board_chooser_buttons = []
@@ -160,16 +160,20 @@ class Application(tk.Frame):
             if index == 7:
                 btn['bg'] = 'grey'
                 btn['activebackground'] = '#BBBBBB'
-            btn.grid(row=0, column=(4+index))
+            btn.grid(row=0, column=(2+index))
             btn['command'] = lambda i=index, b=btn: self.open_board(Application.BOARDS[i], b)
             self.board_chooser_buttons.append(btn)
+
+        self.open_board_btn = tk.Button(self, text='', command=self.open_board)
+        self.open_board_btn['image'] = self.STAR_IMAGE
+        self.open_board_btn.grid(row=0, column=10)
 
         # disabled for now, maybe use command line args to load a custom board
         # self.load_board_btn = tk.Button(self, text='Open Board', command=self.open_board)
         # self.load_board_btn.grid(row=0, column=5, columnspan=4, sticky='W')
 
         self.start_game_btn = tk.Button(self, text='Start', command=self.start_game)
-        self.start_game_btn.grid(row=0, column=11, columnspan=4, sticky='E')
+        self.start_game_btn.grid(row=0, column=13, columnspan=2, sticky='E')
 
         # top Letters
         for x in range(ln.DEFAULT_BOARD_WIDTH):
@@ -261,6 +265,10 @@ class Application(tk.Frame):
             if self.game_state.board is None:
                 self.update_statusbar("No board loaded")
             return
+        else:  # board is some and game not started => replay board
+            board = self.game_state.board
+            self.clear_game()
+            self._load_board(board)
 
         self.game_state.start()
         self.update_statusbar()
