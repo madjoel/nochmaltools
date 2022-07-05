@@ -139,25 +139,19 @@ class Board:
     def _to_index(self, x, y):
         return x + y * self._width
 
-    def get_component(self, x, y):
-        tile = self.get_tile_at(x, y)
-        c = tile.color
+    def get_component_coords(self, x: int, y: int) -> List[Tuple[int, int]]:
+        component_coords = [(x, y)]
+        color = self.get_tile_at(x, y).color
 
-        tiles_in_component = {(x, y)}
-        tiles_to_check = [(x, y)]
+        queue = [(x, y)]
+        while len(queue) > 0:
+            coord = queue.pop(0)
+            for (nx, ny) in get_neighbours(coord):
+                if self.in_bounds(nx, ny) and (nx, ny) not in component_coords and self.get_color_at(nx, ny) == color:
+                    queue.append((nx, ny))
+                    component_coords.append((nx, ny))
 
-        while len(tiles_to_check) > 0:
-            (cx, cy) = tiles_to_check.pop()
-
-            for (ox, oy) in OFFSETS:
-                neighbour_coords = (cx + ox, cy + oy)
-                neighbour_tile = self.get_tile_at(neighbour_coords[0], neighbour_coords[1])
-                if neighbour_tile and neighbour_tile.color == c:
-                    if neighbour_coords not in tiles_in_component:
-                        tiles_to_check.append(neighbour_coords)
-                        tiles_in_component.add(neighbour_coords)
-
-        return tiles_in_component
+        return component_coords
 
     def __str__(self):
         s = ""
@@ -291,7 +285,7 @@ def check_columns(board, lazy=False):
                 colors_seen[current_color] = y
             else:
                 if current_color == last_color or \
-                        (col, colors_seen[current_color]) in get_component_coords(board, col, y):  # fine
+                        (col, colors_seen[current_color]) in board.get_component_coords(col, y):  # fine
                     pass
                 else:  # not fine
                     error_msgs.append("Column {} has multiple occurrences of color {} at row {}"
@@ -330,7 +324,7 @@ def check_components(board, lazy=False):
             if (x, y) in visited_coords:
                 continue
             else:
-                comp = board.get_component(x, y)
+                comp = board.get_component_coords(x, y)
                 visited_coords.update(comp)
 
                 if len(comp) > 6:
@@ -559,7 +553,7 @@ def _star_is_placeable_at(board, stars_per_color, x, y):
         return False
 
     # check component for star
-    for (cx, cy) in board.get_component(x, y):
+    for (cx, cy) in board.get_component_coords(x, y):
         ctile = board.get_tile_at(cx, cy)
         if ctile and ctile.star:
             return False
@@ -727,21 +721,6 @@ def get_neighbours(coord, coords=None):
             continue
         neighbours.append(neighbour)
     return neighbours
-
-
-def get_component_coords(board: Board, x: int, y: int) -> List[Tuple[int, int]]:
-    result = [(x, y)]
-    color = board.get_tile_at(x, y).color
-
-    queue = [(x, y)]
-    while len(queue) > 0:
-        coord = queue.pop(0)
-        for (nx, ny) in get_neighbours(coord):
-            if board.in_bounds(nx, ny) and (nx, ny) not in result and board.get_color_at(nx, ny) == color:
-                queue.append((nx, ny))
-                result.append((nx, ny))
-
-    return result
 
 
 # calculates the amount of unique combinations of size r in a collection of n elements

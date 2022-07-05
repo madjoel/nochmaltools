@@ -397,7 +397,7 @@ class Application(tk.Frame):
 
         # only one component
         if len(self.game_state.crossed_tiles_to_commit) > 0:
-            component = self.game_state.board.get_component(self.game_state.crossed_tiles_to_commit[0][0], self.game_state.crossed_tiles_to_commit[0][1])
+            component = self.game_state.board.get_component_coords(self.game_state.crossed_tiles_to_commit[0][0], self.game_state.crossed_tiles_to_commit[0][1])
             if (x, y) not in component:
                 self.update_statusbar("You can't cross tiles from multiple components")
                 return False
