@@ -189,7 +189,8 @@ class PerpetualTimer(Thread):
 class BacktrackingState:
     def __init__(self):
         self.level = 0
-        self.tries = 0
+        self.placements = 0
+        self.steps = 0
 
     def inc_level(self):
         self.level += 1
@@ -197,8 +198,11 @@ class BacktrackingState:
     def dec_level(self):
         self.level -= 1
 
-    def inc_tries(self):
-        self.tries += 1
+    def inc_steps(self):
+        self.steps += 1
+
+    def inc_placements(self):
+        self.placements += 1
 
 
 def read_board_from_file(filename):
@@ -426,8 +430,11 @@ def fill_randomly_smarter(board: Board, rng: random.Random):
                 available_colors.remove(c)
 
 
+def create_descending_component_order() -> List[Tuple[Color, int]]:
+    return [(c, n) for n in range(6, 0, -1) for c in Color.ref_list()]
+
+
 def create_random_component_order(rng: random.Random) -> List[Tuple[Color, int]]:
-    # components = [(c, n) for n in range(6, 0, -1) for c in Color.ref_list()]
     components_order = dict(zip(Color.ref_list(), [list(range(6, 0, -1)) for _ in range(6)]))
 
     color_order = Color.ref_list()
@@ -448,7 +455,7 @@ def fill_smart(board, state, components):
     _fill_smart_backtrack(board, components, 0, state)
 
 
-def _fill_smart_backtrack(board, components, comp_index, state):
+def _fill_smart_backtrack(board, components, comp_index, state: BacktrackingState):
     if comp_index == 5 * 6:
         return True  # done
 
@@ -460,11 +467,13 @@ def _fill_smart_backtrack(board, components, comp_index, state):
         free_space_component = _get_connected_coords(free_space, (fx, fy))[0]
         combinations = get_all_graphs_of_size(free_space_component, (fx, fy), component_size)
         for combi in combinations:
+            #state.inc_steps()
+
             if _combination_is_placeable(board, combi, component_color, free_space):
                 # place combination
                 for (x, y) in combi:
                     board.set_tile_at(x, y, Tile(component_color))
-                state.inc_tries()
+                state.inc_placements()
 
                 # continue with next component
                 state.inc_level()
