@@ -5,6 +5,8 @@ from threading import Thread
 
 from typing import Tuple, List
 
+import png
+
 OFFSETS = [
     (0, -1),
     (1, 0),
@@ -244,6 +246,51 @@ def write_board_to_file(board: Board, filename, comment: str = ''):
         lines = ["{}\n".format(board.width), "{}\n".format(board.height)]
         lines.extend(str(board).splitlines(True))
         file.writelines(lines)
+
+
+palette = [
+    (int('0x' + Color.RED.to_rgb()[1:3], 16),
+     int('0x' + Color.RED.to_rgb()[3:5], 16),
+     int('0x' + Color.RED.to_rgb()[5:], 16)),
+    (int('0x' + Color.ORANGE.to_rgb()[1:3], 16),
+     int('0x' + Color.ORANGE.to_rgb()[3:5], 16),
+     int('0x' + Color.ORANGE.to_rgb()[5:], 16)),
+    (int('0x' + Color.YELLOW.to_rgb()[1:3], 16),
+     int('0x' + Color.YELLOW.to_rgb()[3:5], 16),
+     int('0x' + Color.YELLOW.to_rgb()[5:], 16)),
+    (int('0x' + Color.GREEN.to_rgb()[1:3], 16),
+     int('0x' + Color.GREEN.to_rgb()[3:5], 16),
+     int('0x' + Color.GREEN.to_rgb()[5:], 16)),
+    (int('0x' + Color.BLUE.to_rgb()[1:3], 16),
+     int('0x' + Color.BLUE.to_rgb()[3:5], 16),
+     int('0x' + Color.BLUE.to_rgb()[5:], 16)),
+    (int('0x' + Color.WHITE.to_rgb()[1:3], 16),
+     int('0x' + Color.WHITE.to_rgb()[3:5], 16),
+     int('0x' + Color.WHITE.to_rgb()[5:], 16)),
+]
+
+
+def write_board_to_png(board: Board, filename: str):
+    lines = str(board).lower().splitlines(False)
+    lines = [[_color_char_to_color_index(c) for c in row] for row in lines]
+    w = png.Writer(len(lines[0]), len(lines), palette=palette, bitdepth=4)
+    f = open(filename, 'wb')
+    w.write(f, lines)
+
+
+def _color_char_to_color_index(c: str) -> int:
+    if c == 'r':
+        return 0
+    if c == 'o':
+        return 1
+    if c == 'y':
+        return 2
+    if c == 'g':
+        return 3
+    if c == 'b':
+        return 4
+    if c == '_':
+        return 5
 
 
 # --- checking functions ---
