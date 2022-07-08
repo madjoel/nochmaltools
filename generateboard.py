@@ -15,19 +15,20 @@ STATE = ln.BacktrackingState()
 FILENAME = ""
 ORDER = ['', '']
 STARTED: datetime
+FINISHED: datetime
 
 
 def main():
+    global FILENAME, SEED, ORDER, STARTED, FINISHED
+
     signal.signal(signal.SIGINT, conclude_generation)
 
     if len(sys.argv) < 2:
         print("Usage: {} <output_board_file> [<seed as integer>]".format(sys.argv[0]))
         sys.exit(1)
 
-    global FILENAME
     FILENAME = sys.argv[1]
 
-    global SEED
     if len(sys.argv) == 3:
         try:
             SEED = int(sys.argv[2])
@@ -43,7 +44,6 @@ def main():
     # components = ln.create_random_component_order(rng)
     components = ln.create_descending_component_order()
 
-    global ORDER
     ORDER = ['', '']
     for i in range(len(components)):
         print("{:0>2}".format(i), end=" ")
@@ -57,7 +57,6 @@ def main():
     print()
     ORDER[1] = ORDER[1].strip()
 
-    global STARTED
     STARTED = datetime.now()
 
     # actually generate the board
@@ -73,7 +72,8 @@ def main():
 
 
 def conclude_generation(signum, frame):
-    finished = datetime.now()
+    global FINISHED
+    FINISHED = datetime.now()
 
     # the result
     print("\nFinal amount of placements: {}, final level: {}".format(STATE.placements, STATE.level))
@@ -92,8 +92,8 @@ def conclude_generation(signum, frame):
               "Component order:     {}\n" \
               "                     {}\n" \
               "Total placements:    {}\n" \
-              "Final level:         {}".format(STARTED, "aborted:  " if aborted else "finished: ", finished,
-                                               (finished - STARTED), SEED, ORDER[0], ORDER[1], STATE.placements,
+              "Final level:         {}".format(STARTED, "aborted:  " if aborted else "finished: ", FINISHED,
+                                               (FINISHED - STARTED), SEED, ORDER[0], ORDER[1], STATE.placements,
                                                STATE.level)
 
     # write the board to file
