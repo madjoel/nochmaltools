@@ -1,7 +1,9 @@
+import os
 import random
 from enum import Enum
 from math import factorial
 from threading import Thread
+import datetime
 
 from typing import Tuple, List
 
@@ -498,11 +500,18 @@ def create_random_component_order(rng: random.Random) -> List[Tuple[Color, int]]
     return components
 
 
-def fill_smart(board, state, components) -> bool:
-    return _fill_smart_backtrack(board, components, 0, state)
+def fill_smart(board, state, components, free_space_limit: int = 32, write_pngs: bool = False, no_line6: bool = True,
+               only_one_comp_per_col: bool = True) -> bool:
+    folder_for_steps = "gen-board-steps-{}".format(datetime.datetime.now())
+    if write_pngs:
+        os.mkdir(folder_for_steps)
+
+    return _fill_smart_backtrack(board, components, 0, state, free_space_limit, write_pngs, folder_for_steps, no_line6,
+                                 only_one_comp_per_col)
 
 
-def _fill_smart_backtrack(board, components, comp_index, state: BacktrackingState):
+def _fill_smart_backtrack(board, components, comp_index, state: BacktrackingState, free_space_limit: int, write_pngs,
+                          folder_for_steps, no_line6: bool, only_one_comp_per_col: bool):
     if comp_index == 5 * 6:
         return True  # done
 
@@ -510,22 +519,25 @@ def _fill_smart_backtrack(board, components, comp_index, state: BacktrackingStat
     component_size = components[comp_index][1]
 
     free_space = _get_free_tiles(board)
-    for (fx, fy) in free_space:
+    for (fx, fy) in free_space[:free_space_limit]:
         free_space_component = _get_connected_coords(free_space, (fx, fy))[0]
         combinations = get_all_graphs_of_size(free_space_component, (fx, fy), component_size)
         for combi in combinations:
-            #state.inc_steps()
-
-            if _combination_is_placeable(board, combi, component_color, free_space):
+            if _combination_is_placeable(board, combi, component_color, free_space, no_line6, only_one_comp_per_col):
                 # place combination
                 for (x, y) in combi:
                     board.set_tile_at(x, y, Tile(component_color))
                 state.inc_placements()
 
+                # use with caution: write state to image file
+                if write_pngs:
+                    write_board_to_png(board, '{}/try{:0>7}-lvl{:0>2}.png'.format(folder_for_steps, state.placements,
+                                                                                  state.level))
+
                 # continue with next component
                 state.inc_level()
-                if _fill_smart_backtrack(board, components, comp_index + 1, state):
-                    # print('Placing component index {} ...'.format(comp_index + 1))
+                if _fill_smart_backtrack(board, components, comp_index + 1, state, free_space_limit, write_pngs,
+                                         folder_for_steps, no_line6, only_one_comp_per_col):
                     return True
                 else:
                     for (x, y) in combi:
@@ -535,12 +547,12 @@ def _fill_smart_backtrack(board, components, comp_index, state: BacktrackingStat
     return False
 
 
-def _combination_is_placeable(board, combination, color, free_space):
+def _combination_is_placeable(board, combination, color, free_space, no_line6: bool, only_one_comp_per_col: bool):
     result = True
 
     # line6-constraint
     # to avoid having 6 tiles of the same color in a row this constraint is applied
-    if len(combination) == 6:
+    if no_line6 and len(combination) == 6:
         _, first_y = list(combination)[0]
         all_the_same = True
 
@@ -553,7 +565,7 @@ def _combination_is_placeable(board, combination, color, free_space):
             return False
 
     for (x, y) in combination:
-        if _tile_color_is_placeable_at(board, color, x, y, True, combination):
+        if _tile_color_is_placeable_at(board, color, x, y, only_one_comp_per_col, True, combination):
             board.set_tile_at(x, y, Tile(color))
         else:
             result = False
@@ -637,7 +649,8 @@ def _place_stars_backtrack(board: Board, stars_per_color, col: int, rng: random.
     return False
 
 
-def _tile_color_is_placeable_at(board, color, x, y, check_neighbours=False, do_not_check_these_coords=None):
+def _tile_color_is_placeable_at(board, color, x, y, only_one_comp_per_col: bool, check_neighbours=False,
+                                do_not_check_these_coords=None):
     tile = board.get_tile_at(x, y)
 
     # fail if already initialized
@@ -665,10 +678,11 @@ def _tile_color_is_placeable_at(board, color, x, y, check_neighbours=False, do_n
 
     # only-one-color-component-per-column-constraint
     # fail if there is already a tile of this color in this column which is not of the current component
-    for col in range(7):
-        tile = board.get_tile_at(x, col)
-        if tile and tile.color == color and not (x, col) in do_not_check_these_coords:
-            return False
+    if only_one_comp_per_col:
+        for col in range(7):
+            tile = board.get_tile_at(x, col)
+            if tile and tile.color == color and not (x, col) in do_not_check_these_coords:
+                return False
 
     return True
 
