@@ -165,7 +165,7 @@ class Application(tk.Frame):
 
         # generate tool bar
         self.generate_bar = tk.Frame(self)
-        self.generate_bar.grid(row=8, column=0, columnspan=15, sticky='W')
+        # self.generate_bar.grid(row=8, column=0, columnspan=15, sticky='W')
         self.btn_gen = tk.Button(self.generate_bar, text='Generate Board', command=self.generate_a_board)
         self.btn_cancel = tk.Button(self.generate_bar, text='Cancel Generation', command=self.cancel_generation)
         self.btn_gen.pack(side='left')
