@@ -451,8 +451,8 @@ def create_random_component_order(rng: random.Random) -> List[Tuple[Color, int]]
     return components
 
 
-def fill_smart(board, state, components):
-    _fill_smart_backtrack(board, components, 0, state)
+def fill_smart(board, state, components) -> bool:
+    return _fill_smart_backtrack(board, components, 0, state)
 
 
 def _fill_smart_backtrack(board, components, comp_index, state: BacktrackingState):
@@ -591,14 +591,14 @@ def _place_stars_backtrack(board: Board, stars_per_color, col: int, rng: random.
 
 
 def _tile_color_is_placeable_at(board, color, x, y, check_neighbours=False, do_not_check_these_coords=None):
-    if do_not_check_these_coords is None:
-        do_not_check_these_coords = set()
-
     tile = board.get_tile_at(x, y)
 
     # fail if already initialized
     if tile.color != Color.UNINITIALIZED:
         return False
+
+    if do_not_check_these_coords is None:
+        do_not_check_these_coords = set()
 
     # fail if a neighbour already has this color
     if check_neighbours:
