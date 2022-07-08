@@ -547,6 +547,17 @@ def _fill_smart_backtrack(board, components, comp_index, state: BacktrackingStat
     return False
 
 
+def _get_free_tiles(board):
+    free_tiles = []
+
+    for x in range(15):
+        for y in range(7):
+            if board.get_tile_at(x, y).color == Color.UNINITIALIZED:
+                free_tiles.append((x, y))
+
+    return free_tiles
+
+
 def _combination_is_placeable(board, combination, color, free_space, no_line6: bool, only_one_comp_per_col: bool):
     result = True
 
@@ -585,68 +596,6 @@ def _combination_is_placeable(board, combination, color, free_space, no_line6: b
         board.set_tile_at(x, y, Tile())
 
     return result
-
-
-def _get_free_tiles(board):
-    free_tiles = []
-
-    for x in range(15):
-        for y in range(7):
-            if board.get_tile_at(x, y).color == Color.UNINITIALIZED:
-                free_tiles.append((x, y))
-
-    return free_tiles
-
-
-# distribute stars in the board
-def distribute_stars(board, rng: random.Random, assume_no_stars=False):
-    if not assume_no_stars:
-        for y in range(board.height):
-            for x in range(board.width):
-                tile = board.get_tile_at(x, y)
-                if tile.star:
-                    tile.star = False
-                    board.set_tile_at(x, y, tile)
-
-    stars_per_color = dict(zip(Color.ref_list(), [set() for _ in range(len(Color.ref_list()))]))
-    _place_stars_backtrack(board, stars_per_color, 0, rng)
-
-
-def _star_is_placeable_at(board, stars_per_color, x, y):
-    tile = board.get_tile_at(x, y)
-    color = tile.color
-
-    # check amount of stars for this color
-    if len(stars_per_color[color]) >= 3:
-        return False
-
-    # check component for star
-    for (cx, cy) in board.get_component_coords(x, y):
-        ctile = board.get_tile_at(cx, cy)
-        if ctile and ctile.star:
-            return False
-
-    return True
-
-
-def _place_stars_backtrack(board: Board, stars_per_color, col: int, rng: random.Random):
-    if col == board.width:
-        return True  # done
-
-    row_indices = [i for i in range(board.height)]
-    rng.shuffle(row_indices)
-    for row in row_indices:
-        if _star_is_placeable_at(board, stars_per_color, col, row):
-            board.set_star_at(col, row)
-            stars_per_color[board.get_tile_at(col, row).color].add((col, row))
-
-            if _place_stars_backtrack(board, stars_per_color, col + 1, rng):
-                return True
-            else:
-                board.set_star_at(col, row, False)
-                stars_per_color[board.get_tile_at(col, row).color].remove((col, row))
-
-    return False
 
 
 def _tile_color_is_placeable_at(board, color, x, y, only_one_comp_per_col: bool, check_neighbours=False,
@@ -748,9 +697,63 @@ def _get_connected_coords(coordinates, anchor=None):
     return components
 
 
+# distribute stars in the board
+def distribute_stars(board, rng: random.Random, assume_no_stars=False):
+    if not assume_no_stars:
+        for y in range(board.height):
+            for x in range(board.width):
+                tile = board.get_tile_at(x, y)
+                if tile.star:
+                    tile.star = False
+                    board.set_tile_at(x, y, tile)
+
+    stars_per_color = dict(zip(Color.ref_list(), [set() for _ in range(len(Color.ref_list()))]))
+    _place_stars_backtrack(board, stars_per_color, 0, rng)
+
+
+def _place_stars_backtrack(board: Board, stars_per_color, col: int, rng: random.Random):
+    if col == board.width:
+        return True  # done
+
+    row_indices = [i for i in range(board.height)]
+    rng.shuffle(row_indices)
+    for row in row_indices:
+        if _star_is_placeable_at(board, stars_per_color, col, row):
+            board.set_star_at(col, row)
+            stars_per_color[board.get_tile_at(col, row).color].add((col, row))
+
+            if _place_stars_backtrack(board, stars_per_color, col + 1, rng):
+                return True
+            else:
+                board.set_star_at(col, row, False)
+                stars_per_color[board.get_tile_at(col, row).color].remove((col, row))
+
+    return False
+
+
+def _star_is_placeable_at(board, stars_per_color, x, y):
+    tile = board.get_tile_at(x, y)
+    color = tile.color
+
+    # check amount of stars for this color
+    if len(stars_per_color[color]) >= 3:
+        return False
+
+    # check component for star
+    for (cx, cy) in board.get_component_coords(x, y):
+        ctile = board.get_tile_at(cx, cy)
+        if ctile and ctile.star:
+            return False
+
+    return True
+
+
 # returns the set of all subgraphs with size amount of nodes given a graph and a start node
 def get_all_graphs_of_size(coords, start, size):
     solutions = []  # this will have sets of frozensets as elements
+
+    if len(coords) == 0 or start not in coords:
+        return set()
 
     for i in range(size):
         if i == 0:
