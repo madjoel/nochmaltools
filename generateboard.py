@@ -62,7 +62,11 @@ def main():
     STARTED = datetime.now()
 
     # actually generate the board
-    ln.fill_smart(BOARD, STATE, components)
+    success = ln.fill_smart(BOARD, STATE, components)
+    if not success:
+        print("\nFailed to generate a board with seed {}.".format(SEED))
+    else:
+        ln.distribute_stars(BOARD, rng)
 
     # this will stop the timer
     stop_flag.set()
