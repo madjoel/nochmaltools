@@ -37,8 +37,9 @@ def main():
     rng = Random(SEED)
 
     stop_flag = Event()
-    thread = ln.PerpetualTimer(stop_flag, lambda: print("\rlvl. {:0>2}, placement no. {}"
-                                                        .format(STATE.level, STATE.placements), end=""), 0.1)
+    thread = ln.PerpetualTimer(stop_flag, lambda: print("\relapsed time: {}, lvl. {:0>2}, placement no. {}"
+                                                        .format((datetime.now() - STARTED), STATE.level,
+                                                                STATE.placements), end=""), 0.1)
     thread.start()
 
     # components = ln.create_random_component_order(rng)
