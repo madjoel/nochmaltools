@@ -22,6 +22,7 @@ def main():
     global FILENAME, SEED, ORDER, STARTED, FINISHED
 
     signal.signal(signal.SIGINT, conclude_generation)
+    signal.signal(signal.SIGUSR1, print_board)
 
     if len(sys.argv) < 2:
         print("Usage: {} <output_board_file> [<seed as integer>]".format(sys.argv[0]))
@@ -65,9 +66,7 @@ def main():
 
     # this will stop the timer
     stop_flag.set()
-
-    # board = ln.read_board_from_file(sys.argv[1])
-    ln.distribute_stars(BOARD, rng)
+    thread.join()
 
     conclude_generation(-1, None)
 
@@ -101,6 +100,13 @@ def conclude_generation(signum, frame):
     ln.write_board_to_file(BOARD, FILENAME, comment)
 
     sys.exit(1)
+
+
+def print_board(signum, frame):
+    print("\n\nIntermediary result after {}: placements: {}, level: {}".format(datetime.now() - STARTED, STATE.placements,
+                                                                             STATE.level))
+    print(BOARD)
+    print()
 
 
 if __name__ == "__main__":
