@@ -6,6 +6,7 @@ from threading import Event
 from datetime import datetime
 import signal
 import argparse
+from typing import List, Tuple
 
 import libnochmal as ln
 
@@ -36,6 +37,10 @@ def main():
     cli_parser.add_argument('--multiple-comp-per-col', action='store_true',
                             help='This deactivates the only-one-color-component-per-column-constraint and allows '
                                  'multiple components of the same color to be present in one column')
+    cli_parser.add_argument('--order', type=str, default='RFCI', choices=['RFCI', 'RAND', 'DESC'],
+                            help='This controls the order in which the components are placed on the board.\n  RFCI: '
+                                 'Random with fixed color interval. RAND: completely random. DESC: Ordered from big to '
+                                 'small component size with default color order. (default is RFCI)')
     cli_parser.add_argument('outfile', help='The file name to save the generated board to')
     ARGS = cli_parser.parse_args()
 
@@ -52,8 +57,14 @@ def main():
                                                                 STATE.placements), end=""), 0.1)
     thread.start()
 
-    # components = ln.create_random_component_order(rng)
-    components = ln.create_descending_component_order()
+    components: List[Tuple[ln.Color, int]]
+    if ARGS.order == 'DESC':
+        components = ln.create_descending_component_order()
+    elif ARGS.order == 'RFCI':
+        components = ln.create_random_fixed_color_interval_component_order(rng)
+    else:
+        components = ln.create_descending_component_order()
+        rng.shuffle(components)
 
     ORDER = ['', '']
     for i in range(len(components)):
@@ -105,12 +116,13 @@ def conclude_generation(signum, frame):
               "Seed:                {}\n" \
               "Component order:     {}\n" \
               "                     {}\n" \
+              "Comp. order setting: {}\n" \
               "Free space limit:    {}\n" \
               "line6-constraint:    {}\n" \
               "mul-comp-constraint: {}\n" \
               "Total placements:    {}\n" \
               "Final level:         {}".format(STARTED, "aborted:  " if aborted else "finished: ", FINISHED,
-                                               (FINISHED - STARTED), ARGS.seed, ORDER[0], ORDER[1],
+                                               (FINISHED - STARTED), ARGS.seed, ORDER[0], ORDER[1], ARGS.order,
                                                ARGS.limit_free_space,
                                                "DEACTIVATED" if ARGS.line6 else "ACTIVATED",
                                                "DEACTIVATED" if ARGS.multiple_comp_per_col else "ACTIVATED",

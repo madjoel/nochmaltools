@@ -483,7 +483,7 @@ def create_descending_component_order() -> List[Tuple[Color, int]]:
     return [(c, n) for n in range(6, 0, -1) for c in Color.ref_list()]
 
 
-def create_random_component_order(rng: random.Random) -> List[Tuple[Color, int]]:
+def create_random_fixed_color_interval_component_order(rng: random.Random) -> List[Tuple[Color, int]]:
     components_order = dict(zip(Color.ref_list(), [list(range(6, 0, -1)) for _ in range(6)]))
 
     color_order = Color.ref_list()
