@@ -125,10 +125,10 @@ class Application(tk.Frame):
 
         self.selected_tool = EnumVar(Tool, default=Tool.PEN, master=master, value=Tool.PEN)
         self.radio_pen = tk.Radiobutton(self.top_tool_tool_bar, text='Pen', variable=self.selected_tool, value=Tool.PEN)
-        self.radio_fill = tk.Radiobutton(self.top_tool_tool_bar, text='Fill', variable=self.selected_tool, value=Tool.FILL)
+        # self.radio_fill = tk.Radiobutton(self.top_tool_tool_bar, text='Fill', variable=self.selected_tool, value=Tool.FILL)
         self.radio_star = tk.Radiobutton(self.top_tool_tool_bar, text='Star', variable=self.selected_tool, value=Tool.STAR)
         self.radio_pen.pack(side='left')
-        self.radio_fill.pack(side='left')
+        # self.radio_fill.pack(side='left')
         self.radio_star.pack(side='left')
 
         # color tool bar
