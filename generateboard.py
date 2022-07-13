@@ -30,7 +30,8 @@ def main():
                             help='With this setting the choices for the next component to be placed at will be limited '
                                  'to the first <limit_as_integer> free spaces')
     cli_parser.add_argument('-p', '--write-pngs', action='store_true',
-                            help='Write every placement step to a png file (WARNING: can create huge amount of files!)')
+                            help='Write every placement step to a png file (Requires PyPNG to be installed) (WARNING: '
+                                 'can create huge amount of files!)')
     cli_parser.add_argument('--line6', action='store_true',
                             help='This deactivates the line6-constraint and allows components of size 6 to be placed '
                                  'in a horizontal line')
@@ -82,7 +83,8 @@ def main():
     STARTED = datetime.now()
 
     # actually generate the board
-    success = ln.fill_smart(BOARD, STATE, components, free_space_limit=ARGS.limit_free_space, no_line6=(not ARGS.line6),
+    success = ln.fill_smart(BOARD, STATE, components, write_pngs=ARGS.write_pngs,
+                            free_space_limit=ARGS.limit_free_space, no_line6=(not ARGS.line6),
                             only_one_comp_per_col=(not ARGS.multiple_comp_per_col))
     if not success:
         print("\nFailed to generate a board with seed {}.".format(ARGS.seed))
