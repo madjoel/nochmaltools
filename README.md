@@ -39,3 +39,6 @@ tiles as possible to achieve a high score. The script `singleplayerchallenge.py`
 It is also possible to load custom boards and play on them.
 
 ![Single player challenge black](img/singleplayerchallenge-blackboard.png)
+
+### Dependencies
+- tkinter (for the GUI)
