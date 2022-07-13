@@ -1,5 +1,6 @@
 import os
 import random
+import sys
 from enum import Enum
 from math import factorial
 from threading import Thread
@@ -7,7 +8,10 @@ import datetime
 
 from typing import Tuple, List
 
-import png
+try:
+    import png
+except ImportError:
+    png = None
 
 OFFSETS = [
     (0, -1),
@@ -273,6 +277,9 @@ palette = [
 
 
 def write_board_to_png(board: Board, filename: str):
+    if png is None:
+        return
+
     lines = str(board).lower().splitlines(False)
     lines = [[_color_char_to_color_index(c) for c in row] for row in lines]
     w = png.Writer(len(lines[0]), len(lines), palette=palette, bitdepth=4)
@@ -504,7 +511,12 @@ def fill_smart(board, state, components, free_space_limit: int = 32, write_pngs:
                only_one_comp_per_col: bool = True) -> bool:
     folder_for_steps = "gen-board-steps-{}".format(datetime.datetime.now())
     if write_pngs:
-        os.mkdir(folder_for_steps)
+        if png is None:
+            print("You don't have the PyPNG module installed. To write out steps of the generation process this module "
+                  "is required.", file=sys.stderr)
+            write_pngs = False
+        else:
+            os.mkdir(folder_for_steps)
 
     return _fill_smart_backtrack(board, components, 0, state, free_space_limit, write_pngs, folder_for_steps, no_line6,
                                  only_one_comp_per_col)
