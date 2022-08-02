@@ -10,6 +10,9 @@ The `generateboard.py` script allows to generate a board via backtracking. For r
 number generator is used. The algorithm is configurable and the available parameters and their description can be listed
 by running `generateboard.py -h`.
 
+### Dependencies
+- To write every successful placement to a png file (`-p` argument) , the module `png` from `PyPNG` is required.
+
 ### Usage
     generateboard.py [-h] [-s <seed_as_integer>] [-l <limit_as_integer>] [-p] [--line6] [--multiple-comp-per-col] [--order {RFCI,RAND,DESC}] <output-board-file>
 
