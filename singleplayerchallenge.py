@@ -247,6 +247,7 @@ class Application(tk.Frame):
                 if board is None:
                     print("Could not load board from file '{}'".format(f))
                 else:
+                    self.clear_game()
                     self._load_board(board)
         else:
             self.clear_game()
